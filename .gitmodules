@@ -1,0 +1,9 @@
+[submodule "home/.vim/bundle/conque-term"]
+	path = home/.vim/bundle/conque-term
+	url = git://github.com/rosenfeld/conque-term.git
+[submodule "home/.vim/bundle/bufexplorer"]
+	path = home/.vim/bundle/bufexplorer
+	url = git://github.com/corntrace/bufexplorer.git
+[submodule "home/.vim/bundle/fugitive"]
+	path = home/.vim/bundle/fugitive
+	url = git://github.com/tpope/vim-fugitive.git

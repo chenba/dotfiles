@@ -118,6 +118,7 @@ au BufEnter * call MyBufEnter()
 
 "{{{Plugin settings
 
+call pathogen#infect()
 let g:bufExplorerSortBy='fullpath'   " Sort by full file path name.
 let g:bufExplorerShowRelativePath=1  " Show relative paths.
 let g:bufExplorerSplitOutPathName=0

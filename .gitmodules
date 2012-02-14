@@ -10,3 +10,6 @@
 [submodule "home/.vim/bundle/supertab"]
 	path = home/.vim/bundle/supertab
 	url = git://github.com/ervandew/supertab.git
+[submodule "home/.oh-my-zsh"]
+	path = home/.oh-my-zsh
+	url = git://github.com/sjl/oh-my-zsh.git

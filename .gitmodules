@@ -13,3 +13,9 @@
 [submodule "home/.oh-my-zsh"]
 	path = home/.oh-my-zsh
 	url = git://github.com/sjl/oh-my-zsh.git
+[submodule "home/.vim/bundle/vim-rails"]
+	path = home/.vim/bundle/vim-rails
+	url = git://github.com/tpope/vim-rails.git
+[submodule "home/.vim/bundle/vim-endwise"]
+	path = home/.vim/bundle/vim-endwise
+	url = git://github.com/tpope/vim-endwise.git

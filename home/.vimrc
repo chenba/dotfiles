@@ -40,8 +40,7 @@ set incsearch
 set hidden
 set history=50
 
-" This should work on linux or osx (vim 7.3.74+).
-" let g:clipbrdDefaultReg = '+'
+set wildignore+=*/tmp/*,*.so,*.swp,*.swo,*.zip
 
 " }}}
 
@@ -124,5 +123,8 @@ let g:bufExplorerSortBy='fullpath'   " Sort by full file path name.
 let g:bufExplorerShowRelativePath=1  " Show relative paths.
 let g:bufExplorerSplitOutPathName=0
 let g:ConqueTerm_EscKey = '<C-y>'
+let g:ctrlp_custom_ignore = {
+    \ 'dir':    '\.git$\|\.svn\$',
+    \ }
 
 " }}}

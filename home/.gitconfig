@@ -1,0 +1,13 @@
+[user]
+    name = Barry Chen
+    email = chenba@gmail.com
+[color]
+    ui = true
+[alias]
+    st = status -sb
+    ci = commit
+    br = branch
+    co = checkout
+    df = diff --color --color-words --abbrev
+    lg = log --graph --decorate --abbrev-commit --date=relative --oneline --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
+    pl = pull --rebase

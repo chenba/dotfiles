@@ -1,3 +1,5 @@
+[core]
+    fileMode = false
 [user]
     name = Barry Chen
     email = chenba@gmail.com
@@ -11,3 +13,5 @@
     df = diff --color --color-words --abbrev
     lg = log --graph --decorate --abbrev-commit --date=relative --oneline --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
     pl = pull --rebase
+[rerere]
+    enabled = 1

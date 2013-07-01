@@ -1,24 +1,6 @@
-[submodule "home/.vim/bundle/conque-term"]
-	path = home/.vim/bundle/conque-term
-	url = git://github.com/rosenfeld/conque-term.git
-[submodule "home/.vim/bundle/bufexplorer"]
-	path = home/.vim/bundle/bufexplorer
-	url = git://github.com/corntrace/bufexplorer.git
-[submodule "home/.vim/bundle/fugitive"]
-	path = home/.vim/bundle/fugitive
-	url = git://github.com/tpope/vim-fugitive.git
-[submodule "home/.vim/bundle/supertab"]
-	path = home/.vim/bundle/supertab
-	url = git://github.com/ervandew/supertab.git
 [submodule "home/.oh-my-zsh"]
 	path = home/.oh-my-zsh
 	url = git://github.com/sjl/oh-my-zsh.git
-[submodule "home/.vim/bundle/vim-rails"]
-	path = home/.vim/bundle/vim-rails
-	url = git://github.com/tpope/vim-rails.git
-[submodule "home/.vim/bundle/vim-endwise"]
-	path = home/.vim/bundle/vim-endwise
-	url = git://github.com/tpope/vim-endwise.git
-[submodule "home/.vim/bundle/ctrlp"]
-	path = home/.vim/bundle/ctrlp
-	url = git://github.com/kien/ctrlp.vim.git
+[submodule "home/.vim/bundle/vundle"]
+	path = home/.vim/bundle/vundle
+	url = git@github.com:gmarik/vundle.git

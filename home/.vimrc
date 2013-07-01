@@ -1,8 +1,35 @@
-call pathogen#infect()
+set nocompatible
+filetype off
+
+set rtp+=~/.vim/bundle/vundle/
+call vundle#rc()
+
+"{{{Vundle managed bundles
+
+" Github
+Bundle 'gmarik/vundle'
+Bundle 'tpope/vim-fugitive'
+Bundle 'kien/ctrlp.vim'
+Bundle 'danro/rename.vim'
+Bundle 'kana/vim-fakeclip'
+Bundle 'airblade/vim-gitgutter'
+Bundle 'scrooloose/syntastic'
+Bundle 'Valloric/YouCompleteMe'
+
+Bundle 'nathanaelkane/vim-indent-guides'
+Bundle 'Raimondi/delimitMate'
+Bundle 'marijnh/tern_for_vim'
+Bundle 'pangloss/vim-javascript'
+Bundle 'jelera/vim-javascript-syntax'
+
+"Vim-script
+Bundle 'bufexplorer.zip'
+Bundle 'Tagbar'
+
+"}}}
 
 "{{{Misc Settings
 
-set nocompatible
 set encoding=utf-8
 set showcmd
 set showmode
@@ -32,6 +59,9 @@ set wildmode=list:longest,full
 set mouse=a
 set ttymouse=xterm2
 
+" Clipboard! Should work on OSX with 7.3+
+set clipboard=unnamed
+
 " Searches.
 set ignorecase
 set smartcase
@@ -52,7 +82,10 @@ colorscheme slate
 set showmatch
 set number
 set ruler
-set laststatus=2 statusline=%02n:%<%f\ %{fugitive#statusline()}\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+set laststatus=2 statusline=%02n:%<%f\ %h%m%r%=%{fugitive#statusline()}\ %{SyntasticStatuslineFlag()}\ %{tagbar#currenttag('[%s]\ ',\ '')}\ %-8.(%l,%c%V%)\ %P
+
+hi StatusLine ctermfg=Gray
+hi StatusLine ctermbg=Red
 
 " }}}
 
@@ -76,6 +109,11 @@ map <C-L> <C-W>l
 " Create Blank Newlines and stay in Normal mode
 nnoremap <silent> zj o<Esc>
 nnoremap <silent> zk O<Esc>
+
+" auto indent when paste
+nnoremap >< V`]>
+nnoremap <lt>> V`]<
+nnoremap =- V`]=
 
 " Space will toggle folds.
 nnoremap <space> za
@@ -101,11 +139,8 @@ autocmd BufReadPost,BufWritePre * if ! &bin | silent! %s/\s\+$//ge | endif
 "{{{Filetypes
 
 autocmd FileType ruby setlocal softtabstop=2 shiftwidth=2
-autocmd FileType scss setl syntax=css tabstop=2 shiftwidth=2
-autocmd FileType php noremap <F10> :w<CR>:!php -l %<CR>
-autocmd FileType ctp noremap <F10> :w<CR>:!php -l %<CR>
 
-function MyBufEnter()
+function! MyBufEnter()
   " don't (re)store filepos for git commit message files
   if &filetype == "gitcommit"
     call setpos('.', [0, 1, 1, 0])
@@ -124,7 +159,15 @@ let g:bufExplorerShowRelativePath=1  " Show relative paths.
 let g:bufExplorerSplitOutPathName=0
 let g:ConqueTerm_EscKey = '<C-y>'
 let g:ctrlp_custom_ignore = {
-    \ 'dir':    '\.git$\|\.svn\$',
+    \ 'dir':    '\.git$\|docs$\|public$',
     \ }
+let g:tagbar_ctags_bin='/usr/local/bin/ctags'
+let g:syntastic_check_on_open=1
+let g:fakeclip_terminal_multiplexer_type='tmux'
+let g:ycm_add_preview_to_completeopt=0
+let g:ycm_confirm_extra_conf=0
+
+inoremap <M-o> <Esc>o
+inoremap <C-j> <Down>
 
 " }}}

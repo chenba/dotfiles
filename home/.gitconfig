@@ -1,5 +1,6 @@
 [core]
     fileMode = false
+	editor = vim
 [user]
     name = Barry Chen
     email = chenba@gmail.com

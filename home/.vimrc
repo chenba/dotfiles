@@ -15,7 +15,7 @@ Bundle 'kana/vim-fakeclip'
 Bundle 'airblade/vim-gitgutter'
 Bundle 'scrooloose/syntastic'
 Bundle 'Valloric/YouCompleteMe'
-
+Bundle 'rking/ag.vim'
 Bundle 'nathanaelkane/vim-indent-guides'
 Bundle 'Raimondi/delimitMate'
 Bundle 'marijnh/tern_for_vim'
@@ -24,7 +24,7 @@ Bundle 'jelera/vim-javascript-syntax'
 
 "Vim-script
 Bundle 'bufexplorer.zip'
-Bundle 'Tagbar'
+" Bundle 'Tagbar' // SUCKS WHEN OPENING LARGE JS FILES
 
 "}}}
 
@@ -82,7 +82,7 @@ colorscheme slate
 set showmatch
 set number
 set ruler
-set laststatus=2 statusline=%02n:%<%f\ %h%m%r%=%{fugitive#statusline()}\ %{SyntasticStatuslineFlag()}\ %{tagbar#currenttag('[%s]\ ',\ '')}\ %-8.(%l,%c%V%)\ %P
+set laststatus=2 statusline=%02n:%<%f\ %h%m%r%=%{fugitive#statusline()}\ %{SyntasticStatuslineFlag()}\ %-8.(%l,%c%V%)\ %P
 
 hi StatusLine ctermfg=Gray
 hi StatusLine ctermbg=Red
@@ -131,7 +131,16 @@ map <F4> :cp<CR>
 "{{{Autocmd
 
 " Remove trailing whitespace
-autocmd BufReadPost,BufWritePre * if ! &bin | silent! %s/\s\+$//ge | endif
+function! StripTrailingWhitespace()
+  normal mZ
+  let l:chars = col("$")
+  %s/\s\+$//e
+  if (line("'Z") != line(".")) || (l:chars != col("$"))
+    echo "Trailing whitespace stripped\n"
+  endif
+  normal `Z
+endfunction
+autocmd BufWritePre * :call StripTrailingWhitespace()
 
 " Automatically cd into the directory that the file is in
 " autocmd BufEnter * execute "chdir ".escape(expand("%:p:h"), ' ')
@@ -157,15 +166,14 @@ au BufEnter * call MyBufEnter()
 let g:bufExplorerSortBy='fullpath'   " Sort by full file path name.
 let g:bufExplorerShowRelativePath=1  " Show relative paths.
 let g:bufExplorerSplitOutPathName=0
-let g:ConqueTerm_EscKey = '<C-y>'
 let g:ctrlp_custom_ignore = {
-    \ 'dir':    '\.git$\|docs$\|public$',
+    \ 'dir':    '\.git$\|docs$\|public$\|node_modules$',
     \ }
-let g:tagbar_ctags_bin='/usr/local/bin/ctags'
 let g:syntastic_check_on_open=1
 let g:fakeclip_terminal_multiplexer_type='tmux'
 let g:ycm_add_preview_to_completeopt=0
 let g:ycm_confirm_extra_conf=0
+let g:ycm_autoclose_preview_window_after_completion=1
 
 inoremap <M-o> <Esc>o
 inoremap <C-j> <Down>

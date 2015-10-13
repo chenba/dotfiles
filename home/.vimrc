@@ -7,20 +7,29 @@ call vundle#rc()
 "{{{Vundle managed bundles
 
 " Github
-Bundle 'gmarik/vundle'
-Bundle 'tpope/vim-fugitive'
-Bundle 'kien/ctrlp.vim'
-Bundle 'danro/rename.vim'
-Bundle 'kana/vim-fakeclip'
-Bundle 'airblade/vim-gitgutter'
-Bundle 'scrooloose/syntastic'
-Bundle 'Valloric/YouCompleteMe'
-Bundle 'rking/ag.vim'
-Bundle 'nathanaelkane/vim-indent-guides'
 Bundle 'Raimondi/delimitMate'
-Bundle 'marijnh/tern_for_vim'
-Bundle 'pangloss/vim-javascript'
+Bundle 'Valloric/YouCompleteMe'
+Bundle 'airblade/vim-gitgutter'
+Bundle 'bling/vim-airline'
+Bundle 'danro/rename.vim'
+Bundle 'gmarik/vundle'
 Bundle 'jelera/vim-javascript-syntax'
+Bundle 'kana/vim-fakeclip'
+Bundle 'kien/ctrlp.vim'
+Bundle 'marijnh/tern_for_vim'
+Bundle 'nathanaelkane/vim-indent-guides'
+Bundle 'pangloss/vim-javascript'
+Bundle 'rking/ag.vim'
+Bundle 'scrooloose/syntastic'
+Bundle 'tpope/vim-dispatch'
+Bundle 'tpope/vim-fireplace'
+Bundle 'tpope/vim-fugitive'
+Bundle 'tpope/vim-obsession'
+Bundle 'tpope/vim-salve'
+Bundle 'tpope/vim-surround'
+Bundle 'vim-scripts/paredit.vim'
+Bundle 'venantius/vim-eastwood'
+Bundle 'venantius/vim-cljfmt'
 
 "Vim-script
 Bundle 'bufexplorer.zip'
@@ -105,6 +114,7 @@ map <C-J> <C-W>j
 map <C-K> <C-W>k
 map <C-H> <C-W>h
 map <C-L> <C-W>l
+map <F5> <C-W>_<C-W><Bar>
 
 " Create Blank Newlines and stay in Normal mode
 nnoremap <silent> zj o<Esc>

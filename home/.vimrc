@@ -8,16 +8,18 @@ call vundle#rc()
 
 " Github
 Bundle 'Raimondi/delimitMate'
-Bundle 'Valloric/YouCompleteMe'
 Bundle 'airblade/vim-gitgutter'
 Bundle 'bling/vim-airline'
 Bundle 'christoomey/vim-tmux-navigator'
 Bundle 'danro/rename.vim'
+Bundle 'elzr/vim-json'
 Bundle 'gmarik/vundle'
+Bundle 'guns/vim-clojure-static'
 Bundle 'jelera/vim-javascript-syntax'
 Bundle 'kana/vim-fakeclip'
 Bundle 'kien/ctrlp.vim'
 Bundle 'marijnh/tern_for_vim'
+Bundle 'mxw/vim-jsx'
 Bundle 'nathanaelkane/vim-indent-guides'
 Bundle 'pangloss/vim-javascript'
 Bundle 'rking/ag.vim'
@@ -28,9 +30,10 @@ Bundle 'tpope/vim-fugitive'
 Bundle 'tpope/vim-obsession'
 Bundle 'tpope/vim-salve'
 Bundle 'tpope/vim-surround'
-Bundle 'vim-scripts/paredit.vim'
-Bundle 'venantius/vim-eastwood'
 Bundle 'venantius/vim-cljfmt'
+Bundle 'venantius/vim-eastwood'
+Bundle 'vim-scripts/paredit.vim'
+Bundle 'Shougo/neocomplete.vim'
 
 "Vim-script
 Bundle 'bufexplorer.zip'
@@ -67,7 +70,6 @@ set wildmode=list:longest,full
 
 " Enable mouse support.
 set mouse=a
-set ttymouse=xterm2
 
 " Clipboard! Should work on OSX with 7.3+
 set clipboard=unnamed
@@ -115,7 +117,7 @@ map <C-J> <C-W>j
 map <C-K> <C-W>k
 map <C-H> <C-W>h
 map <C-L> <C-W>l
-map <F5> <C-W>_<C-W><Bar>
+map <C-F5> <C-W>_<C-W><Bar>
 
 " Create Blank Newlines and stay in Normal mode
 nnoremap <silent> zj o<Esc>
@@ -134,8 +136,8 @@ nnoremap <space> za
 map N Nzz
 map n nzz
 
-map <F3> :cn<CR>
-map <F4> :cp<CR>
+nnoremap <F3> :cn<CR>
+nnoremap <F4> :cp<CR>
 
 " }}}
 
@@ -182,9 +184,12 @@ let g:ctrlp_custom_ignore = {
     \ }
 let g:syntastic_check_on_open=1
 let g:fakeclip_terminal_multiplexer_type='tmux'
-let g:ycm_add_preview_to_completeopt=0
-let g:ycm_confirm_extra_conf=0
-let g:ycm_autoclose_preview_window_after_completion=1
+" Disable AutoComplPop.
+let g:acp_enableAtStartup = 0
+" Use neocomplete.
+let g:neocomplete#enable_at_startup = 1
+" Use smartcase.
+let g:neocomplete#enable_smart_case = 1
 
 inoremap <M-o> <Esc>o
 inoremap <C-j> <Down>

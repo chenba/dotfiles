@@ -139,6 +139,9 @@ map n nzz
 nnoremap <F3> :cn<CR>
 nnoremap <F4> :cp<CR>
 
+" <TAB>: completion.
+inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>""
+
 " }}}
 
 "{{{Autocmd
@@ -185,11 +188,11 @@ let g:ctrlp_custom_ignore = {
 let g:syntastic_check_on_open=1
 let g:fakeclip_terminal_multiplexer_type='tmux'
 " Disable AutoComplPop.
-let g:acp_enableAtStartup = 0
+let g:acp_enableAtStartup=1
 " Use neocomplete.
-let g:neocomplete#enable_at_startup = 1
+let g:neocomplete#enable_at_startup=1
 " Use smartcase.
-let g:neocomplete#enable_smart_case = 1
+let g:neocomplete#enable_smart_case=1
 
 inoremap <M-o> <Esc>o
 inoremap <C-j> <Down>

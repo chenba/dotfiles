@@ -18,3 +18,5 @@
     enabled = 1
 [credential]
 	helper = osxkeychain
+[fetch]
+	prune = true

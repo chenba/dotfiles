@@ -1,45 +1,50 @@
 set nocompatible
 filetype off
 
-set rtp+=~/.vim/bundle/vundle/
-call vundle#rc()
+set rtp+=$GOROOT/misc/vim
+set rtp+=~/.vim/bundle/neobundle.vim
 
-"{{{Vundle managed bundles
+call neobundle#begin(expand('~/.vim/bundle/'))
+NeoBundleFetch 'Shougo/neobundle.vim'
+
+"{{{managed bundles
 
 " Github
-Bundle 'Raimondi/delimitMate'
-Bundle 'airblade/vim-gitgutter'
-Bundle 'bling/vim-airline'
-Bundle 'christoomey/vim-tmux-navigator'
-Bundle 'danro/rename.vim'
-Bundle 'elzr/vim-json'
-Bundle 'gmarik/vundle'
-Bundle 'guns/vim-clojure-static'
-Bundle 'jelera/vim-javascript-syntax'
-Bundle 'kana/vim-fakeclip'
-Bundle 'kien/ctrlp.vim'
-Bundle 'marijnh/tern_for_vim'
-Bundle 'mxw/vim-jsx'
-Bundle 'nathanaelkane/vim-indent-guides'
-Bundle 'pangloss/vim-javascript'
-Bundle 'rking/ag.vim'
-Bundle 'scrooloose/syntastic'
-Bundle 'tpope/vim-dispatch'
-Bundle 'tpope/vim-fireplace'
-Bundle 'tpope/vim-fugitive'
-Bundle 'tpope/vim-obsession'
-Bundle 'tpope/vim-salve'
-Bundle 'tpope/vim-surround'
-Bundle 'venantius/vim-cljfmt'
-Bundle 'venantius/vim-eastwood'
-Bundle 'vim-scripts/paredit.vim'
-Bundle 'Shougo/neocomplete.vim'
+NeoBundle 'Raimondi/delimitMate'
+NeoBundle 'airblade/vim-gitgutter'
+NeoBundle 'bling/vim-airline'
+NeoBundle 'christoomey/vim-tmux-navigator'
+NeoBundle 'danro/rename.vim'
+NeoBundle 'elzr/vim-json'
+NeoBundle 'guns/vim-clojure-static'
+NeoBundle 'jelera/vim-javascript-syntax'
+NeoBundle 'kana/vim-fakeclip'
+NeoBundle 'kien/ctrlp.vim'
+NeoBundle 'marijnh/tern_for_vim'
+NeoBundle 'mxw/vim-jsx'
+NeoBundle 'nathanaelkane/vim-indent-guides'
+NeoBundle 'pangloss/vim-javascript'
+NeoBundle 'rking/ag.vim'
+NeoBundle 'scrooloose/syntastic'
+NeoBundle 'tpope/vim-dispatch'
+NeoBundle 'tpope/vim-fireplace'
+NeoBundle 'tpope/vim-fugitive'
+NeoBundle 'tpope/vim-obsession'
+NeoBundle 'tpope/vim-salve'
+NeoBundle 'tpope/vim-surround'
+NeoBundle 'venantius/vim-cljfmt'
+NeoBundle 'venantius/vim-eastwood'
+NeoBundle 'vim-scripts/paredit.vim'
+NeoBundle 'Shougo/neobundle.vim'
+NeoBundle 'Shougo/neocomplete.vim'
 
 "Vim-script
-Bundle 'bufexplorer.zip'
-" Bundle 'Tagbar' // SUCKS WHEN OPENING LARGE JS FILES
+NeoBundle 'bufexplorer.zip'
 
 "}}}
+
+call neobundle#end()
+NeoBundleCheck
 
 "{{{Misc Settings
 
@@ -62,7 +67,7 @@ set softtabstop=4
 
 " Completion.
 set ofu=syntaxcomplete#Complete
-set completeopt=longest,menuone,preview
+set completeopt=longest,menuone
 
 " Tab completion.
 set wildmenu

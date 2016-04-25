@@ -1,6 +1,6 @@
 [core]
     fileMode = false
-	editor = vim
+    editor = nvim
 [user]
     name = Barry Chen
     email = chenba@gmail.com
@@ -17,6 +17,6 @@
 [rerere]
     enabled = 1
 [credential]
-	helper = osxkeychain
+    helper = osxkeychain
 [fetch]
-	prune = true
+    prune = true

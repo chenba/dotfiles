@@ -1,60 +1,48 @@
 set nocompatible
 filetype off
 
-set rtp+=$GOROOT/misc/vim
-set rtp+=~/.vim/bundle/neobundle.vim
+"{{{managed bundles with dein
 
-call neobundle#begin(expand('~/.vim/bundle/'))
-NeoBundleFetch 'Shougo/neobundle.vim'
+set rtp^=~/.config/nvim/repos/github.com/Shougo/dein.vim
 
-"{{{managed bundles
+call dein#begin(expand('~/.cache/dein'))
 
-" Github
-NeoBundle 'Raimondi/delimitMate'
-NeoBundle 'airblade/vim-gitgutter'
-NeoBundle 'bling/vim-airline'
-NeoBundle 'christoomey/vim-tmux-navigator'
-NeoBundle 'danro/rename.vim'
-NeoBundle 'elzr/vim-json'
-NeoBundle 'guns/vim-clojure-static'
-NeoBundle 'jelera/vim-javascript-syntax'
-NeoBundle 'kana/vim-fakeclip'
-NeoBundle 'kien/ctrlp.vim'
-NeoBundle 'marijnh/tern_for_vim'
-NeoBundle 'mxw/vim-jsx'
-NeoBundle 'nathanaelkane/vim-indent-guides'
-NeoBundle 'pangloss/vim-javascript'
-NeoBundle 'rking/ag.vim'
-NeoBundle 'scrooloose/syntastic'
-NeoBundle 'tpope/vim-dispatch'
-NeoBundle 'tpope/vim-fireplace'
-NeoBundle 'tpope/vim-fugitive'
-NeoBundle 'tpope/vim-obsession'
-NeoBundle 'tpope/vim-salve'
-NeoBundle 'tpope/vim-surround'
-NeoBundle 'venantius/vim-cljfmt'
-NeoBundle 'venantius/vim-eastwood'
-NeoBundle 'vim-scripts/paredit.vim'
-NeoBundle 'Shougo/neobundle.vim'
-NeoBundle 'Shougo/neocomplete.vim'
+call dein#add('~/.config/nvim/repos/github.com/Shougo/dein.vim')
+call dein#add('Shougo/deoplete.nvim')
+call dein#add('kien/ctrlp.vim')
+call dein#add('jlanzarotta/bufexplorer')
+call dein#add('tpope/vim-eunuch')
+call dein#add('rking/ag.vim')
+call dein#add('christoomey/vim-tmux-navigator')
+call dein#add('bling/vim-airline')
+call dein#add('jiangmiao/auto-pairs')
+call dein#add('scrooloose/syntastic')
+call dein#add('scrooloose/nerdcommenter')
 
-"Vim-script
-NeoBundle 'bufexplorer.zip'
+" Git
+call dein#add('tpope/vim-fugitive')
+call dein#add('airblade/vim-gitgutter')
+
+" JavaScript
+call dein#add('marijnh/tern_for_vim')
+call dein#add('jelera/vim-javascript-syntax')
+call dein#add('pangloss/vim-javascript')
+
+call dein#end()
+
+if dein#check_install()
+  call dein#install()
+endif
 
 "}}}
 
-call neobundle#end()
-NeoBundleCheck
-
 "{{{Misc Settings
+
+filetype plugin indent on
 
 set encoding=utf-8
 set showcmd
 set showmode
-
-filetype on
-filetype plugin on
-filetype indent on
 
 set autoindent
 set backspace=indent,eol,start

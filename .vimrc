@@ -1,7 +1,7 @@
 set nocompatible
 filetype off
 
-"{{{managed bundles with dein
+"{{{managed plugins with dein
 
 set rtp^=~/.config/nvim/repos/github.com/Shougo/dein.vim
 
@@ -9,7 +9,8 @@ call dein#begin(expand('~/.cache/dein'))
 
 call dein#add('Shougo/dein.vim')
 call dein#add('Shougo/deoplete.nvim')
-call dein#add('kien/ctrlp.vim')
+call dein#add('junegunn/fzf', { 'build': './install --all', 'merged': 0 })
+call dein#add('junegunn/fzf.vim', { 'depends': 'fzf' })
 call dein#add('jlanzarotta/bufexplorer')
 call dein#add('tpope/vim-eunuch')
 call dein#add('rking/ag.vim')
@@ -112,6 +113,9 @@ map <C-H> <C-W>h
 map <C-L> <C-W>l
 map <C-F5> <C-W>_<C-W><Bar>
 
+" fzf
+nnoremap <C-P> :FZF<CR>
+
 " Create Blank Newlines and stay in Normal mode
 nnoremap <silent> zj o<Esc>
 nnoremap <silent> zk O<Esc>
@@ -175,9 +179,6 @@ au BufEnter * call MyBufEnter()
 let g:bufExplorerSortBy='fullpath'   " Sort by full file path name.
 let g:bufExplorerShowRelativePath=1  " Show relative paths.
 let g:bufExplorerSplitOutPathName=0
-let g:ctrlp_custom_ignore = {
-    \ 'dir':    '\.git$\|docs$\|public$\|node_modules$',
-    \ }
 let g:syntastic_check_on_open=1
 " Disable AutoComplPop.
 let g:acp_enableAtStartup=1

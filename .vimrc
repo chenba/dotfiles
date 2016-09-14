@@ -9,9 +9,13 @@ call dein#begin(expand('~/.cache/dein'))
 
 call dein#add('Shougo/dein.vim')
 call dein#add('Shougo/deoplete.nvim')
+
+" Files and buffers
 call dein#add('junegunn/fzf', { 'build': './install --all', 'merged': 0 })
 call dein#add('junegunn/fzf.vim', { 'depends': 'fzf' })
 call dein#add('jlanzarotta/bufexplorer')
+call dein#add('scrooloose/nerdtree')
+
 call dein#add('tpope/vim-eunuch')
 call dein#add('rking/ag.vim')
 call dein#add('christoomey/vim-tmux-navigator')
@@ -19,6 +23,9 @@ call dein#add('bling/vim-airline')
 call dein#add('jiangmiao/auto-pairs')
 call dein#add('scrooloose/syntastic')
 call dein#add('scrooloose/nerdcommenter')
+
+" Syntax and highlight
+call dein#add('Valloric/MatchTagAlways')
 
 " Git
 call dein#add('tpope/vim-fugitive')
@@ -28,6 +35,7 @@ call dein#add('airblade/vim-gitgutter')
 call dein#add('marijnh/tern_for_vim')
 call dein#add('jelera/vim-javascript-syntax')
 call dein#add('pangloss/vim-javascript')
+call dein#add('elzr/vim-json')
 
 call dein#end()
 

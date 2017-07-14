@@ -59,8 +59,8 @@ set backspace=indent,eol,start
 " Spaces instead of tabs
 set expandtab
 set smarttab
-set shiftwidth=4
-set softtabstop=4
+set shiftwidth=2
+set softtabstop=2
 
 " Completion.
 set ofu=syntaxcomplete#Complete

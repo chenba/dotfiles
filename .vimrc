@@ -107,10 +107,6 @@ hi StatusLine ctermbg=Red
 
 let mapleader=","
 
-" Swap ; and :
-nnoremap ; :
-nnoremap : ;
-
 " Toggle line numbers.
 nnoremap <C-N> :set number!<CR>
 

@@ -6,5 +6,6 @@
     "vim.disableAnnoyingNeovimMessage": true,
     "vim.enableNeovim": true,
     "vim.neovimPath": "C:\\Program Files\\Neovim\\bin\\nvim.exe",
-    "vim.useSystemClipboard": true
+    "vim.useSystemClipboard": true,
+    "workbench.editor.enablePreview": false
 }

@@ -8,10 +8,8 @@ if [[ -s ${ZDOTDIR:-${HOME}}/.zim/init.zsh ]]; then
 fi
 
 export LSCOLORS=fxfxcxdxcxegedabagacad
+export PATH=~/bin:$PATH
 
-PATH=/usr/local/bin:$PATH:/usr/local/Cellar
-
-alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 alias vim='nvim'
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

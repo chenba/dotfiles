@@ -1,4 +1,4 @@
 VBoxClient &
-xrdb -load $HOME/.Xresources
+xrdb -cpp /usr/bin/cpp -load $HOME/.Xresources
 urxvt &
 bspwm

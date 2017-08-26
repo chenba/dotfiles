@@ -36,7 +36,7 @@
 *.color15:      #c5c8c6
 
 URxvt.scrollBar : False
-URxvt*saveLines : 2048
+URxvt.saveLines : 2048
 
 URxvt.boldFont  :
 

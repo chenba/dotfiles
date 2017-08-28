@@ -11,4 +11,5 @@
     "workbench.editor.enablePreview": false,
     "files.eol": "\n",
     "workbench.startupEditor": "newUntitledFile",
+    "files.trimTrailingWhitespace": true,
 }

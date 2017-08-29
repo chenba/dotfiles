@@ -10,6 +10,7 @@
     "vim.useSystemClipboard": true,
     "workbench.editor.enablePreview": false,
     "files.eol": "\n",
-    "workbench.startupEditor": "newUntitledFile",
+    "workbench.startupEditor": "none",
     "files.trimTrailingWhitespace": true,
+    "window.restoreWindows": "all",
 }

@@ -13,4 +13,8 @@
     "workbench.startupEditor": "none",
     "files.trimTrailingWhitespace": true,
     "window.restoreWindows": "all",
+    "editor.fontFamily": "Fira Code",
+    "editor.fontLigatures": true,
+    "editor.fontSize": 13,
+    "files.insertFinalNewline": true,
 }

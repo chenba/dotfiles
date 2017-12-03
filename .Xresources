@@ -38,5 +38,6 @@
 URxvt.scrollBar : False
 URxvt.saveLines : 2048
 
+URxvt.font      :xft:Iosevka:size=10.5
 URxvt.boldFont  :
 

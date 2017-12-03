@@ -1,0 +1,7 @@
+unmap d
+map d removeTab
+unmap u
+map u restoreTab
+unmap b
+map b Vomnibar.activateTabSelection
+

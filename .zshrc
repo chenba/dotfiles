@@ -20,6 +20,4 @@ fi
 #export LSCOLORS=fxfxcxdxcxegedabagacad
 export PATH=~/bin:$PATH
 
-alias vim='nvim'
-
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

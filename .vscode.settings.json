@@ -1,6 +1,8 @@
 {
     "editor.minimap.enabled": false,
     "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
     "editor.wordWrap": "on",
     "files.autoSave": "onFocusChange",
     "vim.disableAnnoyingNeovimMessage": true,

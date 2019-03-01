@@ -386,7 +386,7 @@
 			<value name="Update.DownloadPath" type="string" data="%TEMP%\ConEmu"/>
 			<value name="Update.LeavePackages" type="hex" data="00"/>
 			<value name="Update.PostUpdateCmd" type="string" data="echo Last successful update&gt;ConEmuUpdate.info &amp;&amp; date /t&gt;&gt;ConEmuUpdate.info &amp;&amp; time /t&gt;&gt;ConEmuUpdate.info"/>
-			<key name="HotKeys" modified="2019-02-21 12:03:01" build="180626">
+			<key name="HotKeys" modified="2019-03-01 17:18:33" build="180626">
 				<value name="KeyMacroVersion" type="hex" data="02"/>
 				<value name="Multi.Modifier" type="dword" data="00000011"/>
 				<value name="Multi.ArrowsModifier" type="dword" data="0000005b"/>
@@ -463,7 +463,7 @@
 				<value name="Multi.ShowTabsList" type="dword" data="00000000"/>
 				<value name="Multi.ShowTabsList2" type="dword" data="00000000"/>
 				<value name="ClipboardVkAllLines" type="dword" data="0000102d"/>
-				<value name="ClipboardVkFirstLine" type="dword" data="00001156"/>
+				<value name="ClipboardVkFirstLine" type="dword" data="00000000"/>
 				<value name="Key.AltNumpad" type="dword" data="00000000"/>
 				<value name="DeleteWordToLeft" type="dword" data="00001108"/>
 				<value name="FindTextKey" type="dword" data="00005d46"/>

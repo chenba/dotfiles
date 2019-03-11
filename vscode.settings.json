@@ -1,0 +1,19 @@
+{
+    "editor.minimap.enabled": false,
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.wordWrap": "on",
+    "files.autoSave": "onFocusChange",
+    "vim.disableAnnoyingNeovimMessage": true,
+    "vim.enableNeovim": true,
+    "vim.hlsearch": true,
+    "vim.neovimPath": "C:\\tools\\neovim\\Neovim\\bin\\nvim.exe",
+    "vim.useSystemClipboard": true,
+    "workbench.editor.enablePreview": false,
+    "files.eol": "\n",
+    "workbench.startupEditor": "none",
+    "files.trimTrailingWhitespace": true,
+    "window.restoreWindows": "all",
+    "files.insertFinalNewline": true
+}

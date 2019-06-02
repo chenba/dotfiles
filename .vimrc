@@ -1,5 +1,4 @@
 set nocompatible
-
 "{{{managed plugins with dein
 
 set runtimepath+=/home/chenba/.cache/vim/dein/repos/github.com/Shougo/dein.vim
@@ -24,6 +23,13 @@ if dein#load_state('/home/chenba/.cache/vim/dein')
   " Git
   call dein#add('tpope/vim-fugitive')
   call dein#add('airblade/vim-gitgutter')
+
+  " Rust
+  call dein#add('rust-lang/rust.vim')
+
+  call dein#add('vim-syntastic/syntastic')
+  call dein#add('majutsushi/tagbar')
+  call dein#add('jiangmiao/auto-pairs')
 
   call dein#end()
   call dein#save_state()
@@ -85,10 +91,10 @@ colorscheme slate
 set showmatch
 set number
 set ruler
-" set laststatus=2 statusline=%02n:%<%f\ %h%m%r%=%{fugitive#statusline()}\ %{SyntasticStatuslineFlag()}\ %-8.(%l,%c%V%)\ %P
+set laststatus=2 statusline=%02n:%<%f\ %h%m%r%=%{fugitive#statusline()}\ %{SyntasticStatuslineFlag()}\ %-8.(%l,%c%V%)\ %P
 
-hi StatusLine ctermfg=Gray
-hi StatusLine ctermbg=Red
+hi StatusLine ctermfg=235
+hi StatusLine ctermbg=148
 
 " }}}
 
@@ -134,6 +140,12 @@ inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>""
 
 inoremap <M-o> <Esc>o
 inoremap <C-j> <Down>
+
+" }}}
+
+"{{{ Plugin Settings
+
+let g:syntastic_check_on_open=1
 
 " }}}
 

@@ -145,6 +145,8 @@ inoremap <C-j> <Down>
 
 "{{{ Plugin Settings
 
+
+let g:syntastic_rust_checkers = ['rustc', 'cargo']
 let g:syntastic_check_on_open=1
 
 " }}}

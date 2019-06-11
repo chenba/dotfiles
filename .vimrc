@@ -81,6 +81,9 @@ set history=50
 
 set wildignore+=*/tmp/*,*.so,*.swp,*.swo,*.zip
 
+set modelines=0
+set nomodeline
+
 " }}}
 
 "{{{Look and Feel

@@ -3,7 +3,8 @@
     editor = nvim
 [user]
     name = Barry Chen
-    email = chenba@gmail.com
+    email = bchen@mozilla.com
+    signingKey = 228DB2785954A0D0
 [color]
     ui = true
 [alias]
@@ -16,7 +17,7 @@
     pl = pull --rebase
 [rerere]
     enabled = 1
-[credential]
-    helper = osxkeychain
 [fetch]
     prune = true
+[commit]
+    gpgsign = true

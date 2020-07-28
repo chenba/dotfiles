@@ -1,6 +1,7 @@
 [core]
     fileMode = false
     editor = nvim
+    pager = delta
 [user]
     name = Barry Chen
     email = bchen@mozilla.com
@@ -21,3 +22,24 @@
     prune = true
 [commit]
     gpgsign = true
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    features = line-numbers decorations
+    syntax-theme = Dracula
+    plus-style = syntax "#003800"
+    minus-style = syntax "#3f0001"
+
+[delta "decorations"]
+    commit-decoration-style = bold yellow box ul
+    file-style = bold yellow ul
+    file-decoration-style = none
+    hunk-header-decoration-style = cyan box ul
+
+[delta "line-numbers"]
+    line-numbers-left-style = cyan
+    line-numbers-right-style = cyan
+    line-numbers-minus-style = 124
+    line-numbers-plus-style = 28

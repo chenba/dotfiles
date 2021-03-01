@@ -1,6 +1,6 @@
 [core]
     fileMode = false
-    editor = nvim
+    editor = vim
     pager = delta
 [user]
     name = Barry Chen

@@ -1,50 +1,6 @@
 set nocompatible
 filetype off
 
-"{{{managed plugins with dein
-
-set rtp^=~/.config/nvim/repos/github.com/Shougo/dein.vim
-
-call dein#begin(expand('~/.cache/dein'))
-
-call dein#add('Shougo/dein.vim')
-call dein#add('Shougo/deoplete.nvim')
-
-" Files and buffers
-call dein#add('junegunn/fzf', { 'build': './install --all', 'merged': 0 })
-call dein#add('junegunn/fzf.vim', { 'depends': 'fzf' })
-call dein#add('jlanzarotta/bufexplorer')
-call dein#add('scrooloose/nerdtree')
-
-call dein#add('tpope/vim-eunuch')
-call dein#add('rking/ag.vim')
-call dein#add('christoomey/vim-tmux-navigator')
-call dein#add('bling/vim-airline')
-call dein#add('jiangmiao/auto-pairs')
-call dein#add('scrooloose/syntastic')
-call dein#add('scrooloose/nerdcommenter')
-
-" Syntax and highlight
-call dein#add('Valloric/MatchTagAlways')
-
-" Git
-call dein#add('tpope/vim-fugitive')
-call dein#add('airblade/vim-gitgutter')
-
-" JavaScript
-call dein#add('marijnh/tern_for_vim')
-call dein#add('jelera/vim-javascript-syntax')
-call dein#add('pangloss/vim-javascript')
-call dein#add('elzr/vim-json')
-
-call dein#end()
-
-if dein#check_install()
-  call dein#install()
-endif
-
-"}}}
-
 "{{{Misc Settings
 
 filetype plugin indent on
@@ -96,7 +52,7 @@ colorscheme slate
 set showmatch
 set number
 set ruler
-set laststatus=2 statusline=%02n:%<%f\ %h%m%r%=%{fugitive#statusline()}\ %{SyntasticStatuslineFlag()}\ %-8.(%l,%c%V%)\ %P
+set laststatus=2 statusline=%02n:%<%f\ %h%m%r%=\ \ %-8.(%l,%c%V%)\ %P
 
 hi StatusLine ctermfg=Gray
 hi StatusLine ctermbg=Red
@@ -180,15 +136,5 @@ au BufEnter * call MyBufEnter()
 
 "{{{Plugin settings
 
-let g:bufExplorerSortBy='fullpath'   " Sort by full file path name.
-let g:bufExplorerShowRelativePath=1  " Show relative paths.
-let g:bufExplorerSplitOutPathName=0
-let g:syntastic_check_on_open=1
-" Disable AutoComplPop.
-let g:acp_enableAtStartup=1
-" Use deoplete.
-let g:deoplete#enable_at_startup = 1
-inoremap <M-o> <Esc>o
-inoremap <C-j> <Down>
 
 " }}}

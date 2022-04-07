@@ -1,15 +1,10 @@
 {
+    "editor.accessibilitySupport": "off",
     "editor.detectIndentation": false,
     "editor.fontFamily": "Fira Code",
     "editor.fontLigatures": true,
     "editor.fontSize": 13,
-    // Set the default
     "editor.formatOnSave": false,
-    // Enable per-language
-    "[javascript]": {
-      "editor.formatOnSave": true,
-      "editor.defaultFormatter": "esbenp.prettier-vscode",
-    },
     "editor.insertSpaces": true,
     "editor.minimap.enabled": false,
     "editor.suggestSelection": "first",
@@ -19,71 +14,23 @@
     "files.eol": "\n",
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
-    "vim.enableNeovim": false,
-    "vim.hlsearch": true,
-    "vim.neovimPath": "C:\\Users\\Barry Chen\\scoop\\shims\\nvim.exe",
-    "vim.useSystemClipboard": true,
-    "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+    "prettier.configPath": "/Users/barrychen/code/fxa/_dev/.prettierrc",
+    "security.workspace.trust.untrustedFiles": "open",
+    "vscode-neovim.neovimExecutablePaths.darwin": "/opt/homebrew/bin/nvim",
     "window.restoreWindows": "all",
-    "window.zoomLevel": 0,
+    "workbench.colorTheme": "FlatUI Immersed",
     "workbench.editor.enablePreview": false,
     "workbench.sideBar.location": "left",
     "workbench.startupEditor": "none",
-    "peacock.favoriteColors": [
-      {
-        "name": "Angular Red",
-        "value": "#b52e31"
-      },
-      {
-        "name": "Auth0 Orange",
-        "value": "#eb5424"
-      },
-      {
-        "name": "Azure Blue",
-        "value": "#007fff"
-      },
-      {
-        "name": "C# Purple",
-        "value": "#68217A"
-      },
-      {
-        "name": "Gatsby Purple",
-        "value": "#639"
-      },
-      {
-        "name": "Go Cyan",
-        "value": "#5dc9e2"
-      },
-      {
-        "name": "Java Blue-Gray",
-        "value": "#557c9b"
-      },
-      {
-        "name": "JavaScript Yellow",
-        "value": "#f9e64f"
-      },
-      {
-        "name": "Mandalorian Blue",
-        "value": "#1857a4"
-      },
-      {
-        "name": "Node Green",
-        "value": "#215732"
-      },
-      {
-        "name": "React Blue",
-        "value": "#00b3e6"
-      },
-      {
-        "name": "Something Different",
-        "value": "#832561"
-      },
-      {
-        "name": "Vue Green",
-        "value": "#42b883"
-      }
-    ],
-    "editor.accessibilitySupport": "off",
+    // Enable per-language
+    "[javascript]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+    },
+    "[json]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
     "[typescript]": {
       "editor.formatOnSave": true,
       "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -92,17 +39,4 @@
       "editor.formatOnSave": true,
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
-    "[json]": {
-      "editor.formatOnSave": true,
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "rust.mode": null,
-    "vscode-neovim.neovimPath": "C:\\Users\\Barry Chen\\scoop\\apps\\neovim\\current\\bin\\nvim.exe",
-    "remote.SSH.suppressWindowsSshWarning": true,
-    "remote.SSH.remotePlatform": {
-      "ghost": "linux"
-    },
-    "prettier.configPath": "/home/chenba/code/fxa/_dev/.prettierrc",
 }
-
-

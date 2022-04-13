@@ -28,6 +28,17 @@ call dein#end()
 if dein#check_install()
   call dein#install()
 endif
+
+"}}}
+
+"{{{Look and Feel
+
+syntax enable
+colorscheme slate
+
+set showmatch
+set number
+
 "}}}
 
 "{{{ Mappings

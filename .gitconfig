@@ -15,9 +15,12 @@
     df = diff --color --color-words --abbrev
     lg = log --graph --decorate --abbrev-commit --date=relative --oneline --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
     pl = pull --rebase
+    sh = show --ext-diff
 [rerere]
     enabled = 1
 [fetch]
     prune = true
 [commit]
     gpgsign = true
+[diff]
+    external = difft

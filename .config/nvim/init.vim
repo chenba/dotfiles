@@ -8,27 +8,14 @@ set number
 filetype plugin indent on
 syntax enable
 
-"{{{ dein
-" Required:
-set runtimepath+=/Users/barrychen/.cache/dein/repos/github.com/Shougo/dein.vim
+"{{{ vim-plug
+call plug#begin()
 
-" Required:
-call dein#begin('/Users/barrychen/.cache/dein')
+  Plug 'machakann/vim-sandwich'
+  Plug 'tommcdo/vim-exchange'
+  Plug 'tpope/vim-commentary'
 
-" Let dein manage dein
-" Required:
-call dein#add('/Users/barrychen/.cache/dein/repos/github.com/Shougo/dein.vim')
-
-call dein#add('machakann/vim-sandwich')
-call dein#add('tommcdo/vim-exchange')
-call dein#add('tpope/vim-commentary')
-
-call dein#end()
-
-if dein#check_install()
-  call dein#install()
-endif
-
+call plug#end()
 "}}}
 
 "{{{Look and Feel
@@ -48,5 +35,12 @@ map <C-J> <C-W>j
 map <C-K> <C-W>k
 map <C-H> <C-W>h
 map <C-L> <C-W>l
+
+if exists('g:vscode')
+  nmap <silent> gd <Cmd>call VSCodeNotify('editor.action.revealDefinitionAside')<CR>
+  nmap <silent> gr <Cmd>call VSCodeNotify('editor.action.goToReferences')<CR>
+  nmap <silent> go <Cmd>call VSCodeNotify('workbench.action.gotoSymbol')<CR>
+  nmap <silent> gt <Cmd>call VSCodeNotify('workbench.action.showAllSymbols')<CR>
+endif
 
 "}}}

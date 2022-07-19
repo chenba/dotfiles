@@ -38,9 +38,13 @@ map <C-L> <C-W>l
 
 if exists('g:vscode')
   nmap <silent> gd <Cmd>call VSCodeNotify('editor.action.revealDefinitionAside')<CR>
+  nmap <silent> gy <Cmd>call VSCodeNotify('editor.action.revealDefinition')<CR>
   nmap <silent> gr <Cmd>call VSCodeNotify('editor.action.goToReferences')<CR>
   nmap <silent> go <Cmd>call VSCodeNotify('workbench.action.gotoSymbol')<CR>
   nmap <silent> gt <Cmd>call VSCodeNotify('workbench.action.showAllSymbols')<CR>
+  nmap <silent> gn <Cmd>call VSCodeNotify('workbench.action.editor.nextChange')<CR>
+  nmap <silent> gp <Cmd>call VSCodeNotify('workbench.action.editor.previousChange')<CR>
+  nmap <silent> ge <Cmd>call VSCodeNotify('editor.action.marker.nextInFiles')<CR>
 endif
 
 "}}}

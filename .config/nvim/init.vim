@@ -13,7 +13,10 @@ call plug#begin()
 
   Plug 'machakann/vim-sandwich'
   Plug 'tommcdo/vim-exchange'
-  Plug 'tpope/vim-commentary'
+
+  if (!exists('g:vscode'))
+    Plug 'tpope/vim-commentary'
+  endif
 
 call plug#end()
 "}}}
@@ -45,6 +48,11 @@ if exists('g:vscode')
   nmap <silent> gn <Cmd>call VSCodeNotify('workbench.action.editor.nextChange')<CR>
   nmap <silent> gp <Cmd>call VSCodeNotify('workbench.action.editor.previousChange')<CR>
   nmap <silent> ge <Cmd>call VSCodeNotify('editor.action.marker.nextInFiles')<CR>
+
+  xmap gc  <Plug>VSCodeCommentary
+  nmap gc  <Plug>VSCodeCommentary
+  omap gc  <Plug>VSCodeCommentary
+  nmap gcc <Plug>VSCodeCommentaryLine
 endif
 
 "}}}

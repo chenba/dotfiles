@@ -13,6 +13,8 @@ call plug#begin()
 
   Plug 'machakann/vim-sandwich'
   Plug 'tommcdo/vim-exchange'
+  Plug 'tpope/vim-repeat'
+  Plug 'unblevable/quick-scope'
 
   if (!exists('g:vscode'))
     Plug 'tpope/vim-commentary'
@@ -56,3 +58,8 @@ if exists('g:vscode')
 endif
 
 "}}}
+
+if exists('g:vscode')
+  highlight QuickScopePrimary guifg='#58822f' gui=underline ctermfg=155 cterm=underline
+  highlight QuickScopeSecondary guifg='#3aa0a6' gui=underline ctermfg=81 cterm=underline
+endif

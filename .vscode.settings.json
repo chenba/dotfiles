@@ -7,6 +7,7 @@
     "editor.formatOnSave": false,
     "editor.insertSpaces": true,
     "editor.minimap.enabled": false,
+    "editor.scrollBeyondLastLine": false,
     "editor.suggestSelection": "first",
     "editor.tabSize": 2,
     "editor.wordWrap": "on",
@@ -18,8 +19,9 @@
     "security.workspace.trust.untrustedFiles": "open",
     "vscode-neovim.neovimExecutablePaths.darwin": "/opt/homebrew/bin/nvim",
     "window.restoreWindows": "all",
-    "workbench.colorTheme": "FlatUI Immersed",
+    "workbench.colorTheme": "Quiet Light",
     "workbench.editor.enablePreview": false,
+    "workbench.list.automaticKeyboardNavigation": false,
     "workbench.sideBar.location": "left",
     "workbench.startupEditor": "none",
     // Enable per-language

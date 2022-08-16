@@ -4,6 +4,20 @@ set ignorecase
 set smartcase
 set incsearch
 set number
+set confirm
+
+set encoding=utf-8
+set showcmd
+set showmode
+
+set autoindent
+set backspace=indent,eol,start
+
+" Spaces instead of tabs
+set expandtab
+set smarttab
+set shiftwidth=2
+set softtabstop=2
 
 filetype plugin indent on
 syntax enable
@@ -15,6 +29,23 @@ call plug#begin()
   Plug 'tommcdo/vim-exchange'
   Plug 'tpope/vim-repeat'
   Plug 'unblevable/quick-scope'
+  Plug 'nvim-lualine/lualine.nvim'
+
+  Plug 'nvim-lua/plenary.nvim'
+  Plug 'nvim-telescope/telescope.nvim'
+  Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
+  Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+
+  Plug 'williamboman/nvim-lsp-installer'
+  Plug 'neovim/nvim-lspconfig'
+  Plug 'hrsh7th/cmp-nvim-lsp'
+  Plug 'hrsh7th/cmp-buffer'
+  Plug 'hrsh7th/cmp-path'
+  Plug 'hrsh7th/cmp-cmdline'
+  Plug 'hrsh7th/nvim-cmp'
+
+  " Color scheme
+  Plug 'morhetz/gruvbox'
 
   if (!exists('g:vscode'))
     Plug 'tpope/vim-commentary'
@@ -25,8 +56,8 @@ call plug#end()
 
 "{{{Look and Feel
 
-syntax enable
-colorscheme slate
+colorscheme gruvbox
+let g:gruvbox_contrast_dark = 'hard'
 
 set showmatch
 set number
@@ -63,3 +94,4 @@ if exists('g:vscode')
   highlight QuickScopePrimary guifg='#58822f' gui=underline ctermfg=155 cterm=underline
   highlight QuickScopeSecondary guifg='#3aa0a6' gui=underline ctermfg=81 cterm=underline
 endif
+

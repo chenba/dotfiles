@@ -25,6 +25,7 @@ syntax enable
 "{{{ vim-plug
 call plug#begin()
 
+  Plug 'knubie/vim-kitty-navigator', {'do': 'cp ./*.py ~/.config/kitty/'}
   Plug 'machakann/vim-sandwich'
   Plug 'tommcdo/vim-exchange'
   Plug 'tpope/vim-repeat'
@@ -72,12 +73,6 @@ set number
 "}}}
 
 "{{{ Mappings
-
-" Moving around mah split'd windows.
-map <C-J> <C-W>j
-map <C-K> <C-W>k
-map <C-H> <C-W>h
-map <C-L> <C-W>l
 
 if exists('g:vscode')
   nmap <silent> gd <Cmd>call VSCodeNotify('editor.action.revealDefinitionAside')<CR>

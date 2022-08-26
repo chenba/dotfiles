@@ -22,10 +22,11 @@ set softtabstop=2
 filetype plugin indent on
 syntax enable
 
+:au FocusLost * :wa
+
 "{{{ vim-plug
 call plug#begin()
 
-  Plug 'knubie/vim-kitty-navigator', {'do': 'cp ./*.py ~/.config/kitty/'}
   Plug 'machakann/vim-sandwich'
   Plug 'tommcdo/vim-exchange'
   Plug 'tpope/vim-repeat'
@@ -50,6 +51,7 @@ call plug#begin()
   Plug 'morhetz/gruvbox'
 
   if (!exists('g:vscode'))
+    Plug 'knubie/vim-kitty-navigator', {'do': 'cp ./*.py ~/.config/kitty/'}
     Plug 'tpope/vim-commentary'
   endif
 
@@ -82,6 +84,11 @@ nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 
 if exists('g:vscode')
+  map <C-J> <C-W>j
+  map <C-K> <C-W>k
+  map <C-H> <C-W>h
+  map <C-L> <C-W>l
+
   nmap <silent> gd <Cmd>call VSCodeNotify('editor.action.revealDefinitionAside')<CR>
   nmap <silent> gy <Cmd>call VSCodeNotify('editor.action.revealDefinition')<CR>
   nmap <silent> gr <Cmd>call VSCodeNotify('editor.action.goToReferences')<CR>

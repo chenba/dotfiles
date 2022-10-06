@@ -22,7 +22,7 @@ set softtabstop=2
 filetype plugin indent on
 syntax enable
 
-:au FocusLost * :wa
+autocmd BufLeave,FocusLost * silent! wall
 
 "{{{ vim-plug
 call plug#begin()

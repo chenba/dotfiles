@@ -4,7 +4,7 @@
 [user]
     name = Barry Chen
     email = bchen@mozilla.com
-    signingKey = 228DB2785954A0D0
+    signingKey = ~/.ssh/id_rsa.pub
 [color]
     ui = true
 [alias]
@@ -24,3 +24,5 @@
     gpgsign = true
 [diff]
     external = difft
+[gpg]
+    format = ssh

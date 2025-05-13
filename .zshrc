@@ -132,10 +132,10 @@ unset key
 # User configuration sourced by interactive shells
 #
 
-PATH="$HOME/bin:$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:$(getconf PATH)"
+PATH="$HOME/bin:$HOME/.cargo/bin:/opt/homebrew/bin:$HOME/.local/bin:/usr/local/bin:$(getconf PATH)"
 
-alias cat=bat
-alias ls=exa
+# alias cat=bat
+alias ls='eza --icons'
 alias du=dust
 alias find=fd
 alias top=procs

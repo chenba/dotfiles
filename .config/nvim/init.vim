@@ -78,6 +78,9 @@ set number
 
 let mapleader=","
 
+nnoremap ; :
+nnoremap : ;
+
 nnoremap <leader>ff <cmd>Telescope find_files<cr>
 nnoremap <leader>fg <cmd>Telescope live_grep<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
@@ -88,6 +91,8 @@ if exists('g:vscode')
   map <C-K> <C-W>k
   map <C-H> <C-W>h
   map <C-L> <C-W>l
+
+  vnoremap <leader>ff <cmd>call VSCodeNotify('workbench.action.findInFiles')<cr>
 
   nmap <silent> gd <Cmd>call VSCodeNotify('editor.action.revealDefinitionAside')<CR>
   nmap <silent> gy <Cmd>call VSCodeNotify('editor.action.revealDefinition')<CR>
@@ -111,6 +116,7 @@ if exists('g:vscode')
   highlight QuickScopeSecondary guifg='#3aa0a6' gui=underline ctermfg=81 cterm=underline
 endif
 
+if !exists('g:vscode')
 lua << EOF
   local opts = { noremap=true, silent=true }
   vim.keymap.set('n', '<space>e', vim.diagnostic.open_float, opts)
@@ -148,7 +154,7 @@ lua << EOF
     -- This is the default in Nvim 0.7+
     debounce_text_changes = 150,
   }
-  require('lspconfig')['tsserver'].setup{
+  require('lspconfig')['ts_ls'].setup{
       on_attach = on_attach,
       flags = lsp_flags,
   }
@@ -161,4 +167,4 @@ lua << EOF
       }
   }
 EOF
-
+endif

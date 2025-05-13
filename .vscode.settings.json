@@ -1,9 +1,16 @@
 {
+    // Disable sending telemetry
+    "docker-explorer.enableTelemetry": false,
+    "Lua.telemetry.enable": false,
+
+    // Disable showing release notes
+    "gitlens.showWhatsNewAfterUpgrades": false,
+
     "editor.accessibilitySupport": "off",
     "editor.detectIndentation": false,
-    "editor.fontFamily": "Fira Code",
+    "editor.fontFamily": "SeriousShanns Nerd Font Mono",
     "editor.fontLigatures": true,
-    "editor.fontSize": 13,
+    "editor.fontSize": 14,
     "editor.formatOnSave": false,
     "editor.insertSpaces": true,
     "editor.minimap.enabled": false,
@@ -17,6 +24,7 @@
     "files.trimTrailingWhitespace": true,
     "prettier.configPath": "/Users/barrychen/code/fxa/_dev/.prettierrc",
     "security.workspace.trust.untrustedFiles": "open",
+    "telemetry.telemetryLevel": "off",
     "vscode-neovim.neovimExecutablePaths.darwin": "/opt/homebrew/bin/nvim",
     "window.restoreWindows": "all",
     "workbench.colorTheme": "Quiet Light",
@@ -41,4 +49,21 @@
       "editor.formatOnSave": true,
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+    "tabnine.experimentalAutoImports": false,
+    "redhat.telemetry.enabled": false,
+    "npm.keybindingsChangedWarningShown": true,
+    "[jsonc]": {
+      "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[html]": {
+      "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "extensions.experimental.affinity": {
+      "asvetliakov.vscode-neovim": 1
+    },
+    "gitlens.graph.layout": "editor",
+    "workbench.editor.showTabs": "none",
+    "workbench.editor.editorActionsLocation": "hidden",
+    "window.customTitleBarVisibility": "never",
+    "circleci.hostUrl": "",
 }

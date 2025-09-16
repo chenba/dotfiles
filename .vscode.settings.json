@@ -10,7 +10,7 @@
     "editor.detectIndentation": false,
     "editor.fontFamily": "SeriousShanns Nerd Font Mono",
     "editor.fontLigatures": true,
-    "editor.fontSize": 14,
+    "editor.fontSize": 13.6,
     "editor.formatOnSave": false,
     "editor.insertSpaces": true,
     "editor.minimap.enabled": false,
@@ -66,4 +66,8 @@
     "workbench.editor.editorActionsLocation": "hidden",
     "window.customTitleBarVisibility": "never",
     "circleci.hostUrl": "",
+    "[search-result]": {
+      "editor.lineNumbers": "on"
+    },
+    "workbench.activityBar.location": "hidden",
 }

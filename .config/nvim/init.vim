@@ -148,6 +148,20 @@ endif
 
 if !exists('g:vscode')
 lua << EOF
+-- jump to last edit position on opening file
+  vim.api.nvim_create_autocmd('BufReadPost', {
+    pattern = '*',
+    callback = function(ev)
+      if vim.fn.line("'\"") > 1 and vim.fn.line("'\"") <= vim.fn.line("$") then
+        -- except for in git commit messages
+        -- https://stackoverflow.com/questions/31449496/vim-ignore-specifc-file-in-autocommand
+        if not vim.fn.expand('%:p'):find('.git', 1, true) then
+          vim.cmd('exe "normal! g\'\\""')
+        end
+      end
+    end
+  })
+
   vim.api.nvim_create_autocmd("BufReadPre", {
     callback = function()
       require("persistence").setup({})
@@ -249,13 +263,13 @@ lua << EOF
     local bufopts = { noremap=true, silent=true, buffer=bufnr }
     vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
     vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
-    vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
     vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
+    vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
+    vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
     vim.keymap.set('n', '<space>k', vim.lsp.buf.signature_help, bufopts)
     vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, bufopts)
     vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, bufopts)
     vim.keymap.set({'n','v'}, '<C-.>', require('actions-preview').code_actions, bufopts)
-    vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
     vim.keymap.set('n', '<space>f', function() vim.lsp.buf.format({ async = true }) end, bufopts)
     vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, bufopts)
     vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, bufopts)
@@ -310,7 +324,10 @@ lua << EOF
   vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
   vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist, opts)
   
+
   require("noice").setup({
+    cmdline = { enabled = false },
+    messages = { enabled = false, },
     views = {
       hover = {
         size = {
@@ -325,12 +342,6 @@ lua << EOF
         ["vim.lsp.util.stylize_markdown"] = true,
         ["cmp.entry.get_documentation"] = true, -- requires hrsh7th/nvim-cmp
       },
-    },
-    cmdline = {
-      view = "cmdline",
-    },
-    messages = {
-      view_search = false,
     },
   })
 

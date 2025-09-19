@@ -329,6 +329,9 @@ lua << EOF
     cmdline = {
       view = "cmdline",
     },
+    messages = {
+      view_search = false,
+    },
   })
 
   require("dressing").setup({})

@@ -1,5 +1,6 @@
 set nocompatible
 set confirm
+set termguicolors
 set vb
 
 set clipboard+=unnamedplus
@@ -49,6 +50,7 @@ call plug#begin()
   Plug 'unblevable/quick-scope'
   Plug 'nvim-lualine/lualine.nvim'
 
+  Plug 'folke/persistence.nvim'
   Plug 'nvim-lua/plenary.nvim'
   Plug 'nvim-telescope/telescope.nvim'
   Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
@@ -57,9 +59,13 @@ call plug#begin()
   Plug 'williamboman/mason.nvim'
   Plug 'williamboman/mason-lspconfig.nvim'
   Plug 'neovim/nvim-lspconfig'
+  Plug 'aznhe21/actions-preview.nvim'
 
+  Plug 'stevearc/dressing.nvim'
   Plug 'folke/noice.nvim'
   Plug 'MunifTanjim/nui.nvim'
+  Plug 'lewis6991/gitsigns.nvim'
+  Plug 'SmiteshP/nvim-navic'
 
   Plug 'hrsh7th/cmp-nvim-lsp'
   Plug 'hrsh7th/cmp-buffer'
@@ -94,11 +100,17 @@ let mapleader=","
 
 nnoremap ; :
 nnoremap : ;
+nnoremap <silent> n  nzz
+nnoremap <silent> N  Nzz
+nnoremap <silent> *  *zz
+nnoremap <silent> #  #zz
+nnoremap <silent> g* g*zz
 
 nnoremap <leader>ff <cmd>Telescope find_files<cr>
 nnoremap <leader>fg <cmd>Telescope live_grep<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fr <cmd>Telescope lsp_references<cr>
+nnoremap <leader>fd <cmd>Telescope lsp_definitions<cr>
 nnoremap <leader>fo <cmd>Telescope lsp_document_symbols<cr>
 nnoremap <leader>ft <cmd>Telescope lsp_workspace_symbols<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
@@ -136,6 +148,33 @@ endif
 
 if !exists('g:vscode')
 lua << EOF
+  vim.api.nvim_create_autocmd("BufReadPre", {
+    callback = function()
+      require("persistence").setup({})
+    end,
+  })
+  vim.keymap.set("n", "<leader>qs", function()
+    require("persistence").load()
+  end, { desc = "Restore Session" })
+
+  vim.keymap.set("n", "<leader>qS", function()
+    require("persistence").select()
+  end, { desc = "Select Session" })
+
+  vim.keymap.set("n", "<leader>ql", function()
+    require("persistence").load({ last = true })
+  end, { desc = "Restore Last Session" })
+
+  vim.keymap.set("n", "<leader>qd", function()
+    require("persistence").stop()
+  end, { desc = "Don't Save Current Session" })
+
+  -- highlight yanked text
+  vim.api.nvim_create_autocmd('TextYankPost', {
+    pattern = '*',
+    command = 'silent! lua vim.highlight.on_yank({ timeout = 500 })'
+  })
+
   local cmp = require('cmp')
   cmp.setup({
     mapping = cmp.mapping.preset.insert({
@@ -155,13 +194,55 @@ lua << EOF
                                         
   vim.o.completeopt = 'menu,menuone,noselect'
 
+  local navic = require("nvim-navic")
+  navic.setup({ 
+    highlight = true,
+    lazy_update_context = false,
+  })
+
+  require("lualine").setup({
+    options = {
+      theme = 'gruvbox',
+      refresh = {
+        refresh_time = 16,
+        events = {
+          'CursorMoved',
+          'CursorMovedI',
+          'ModeChanged',
+          'BufEnter',
+          'WinEnter',
+          'BufWritePost',
+          'DiagnosticChanged',
+          'LspAttach',
+          'LspDetach',
+          'FileType',
+          'VimResized',
+          'FocusGained',
+          'TermResponse',
+          'SessionLoadPost',
+          'FileChangedShellPost',
+        },
+      },
+    },
+    sections = {
+      lualine_c = {
+        { 'filename', path = 1 },
+        { function() return navic.get_location() end },
+      }
+    },
+  })
+
   local lsp = require('lspconfig')
+  local util = require('lspconfig.util')
   local capabilities = require('cmp_nvim_lsp').default_capabilities()
   local lsp_flags = { debounce_text_changes = 150 }
 
   -- Use an on_attach function to only map the following keys
   -- after the language server attaches to the current buffer
   local on_attach = function(client, bufnr)
+    if client.server_capabilities.documentSymbolProvider then
+      navic.attach(client, bufnr)
+    end
     -- Enable completion triggered by <c-x><c-o>
     vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 
@@ -170,10 +251,10 @@ lua << EOF
     vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
     vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
     vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
-    vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, bufopts)
+    vim.keymap.set('n', '<space>k', vim.lsp.buf.signature_help, bufopts)
     vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, bufopts)
     vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, bufopts)
-    vim.keymap.set('n', '<space>ca', vim.lsp.buf.code_action, bufopts)
+    vim.keymap.set({'n','v'}, '<C-.>', require('actions-preview').code_actions, bufopts)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
     vim.keymap.set('n', '<space>f', function() vim.lsp.buf.format({ async = true }) end, bufopts)
     vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, bufopts)
@@ -200,12 +281,25 @@ lua << EOF
     flags = lsp_flags,
     capabilities = capabilities,
     filetypes = { "rust" },
-    root_dir = lsp.util.root_pattern("Cargo.toml", ".git"),
+    root_dir = function(fname)
+      return util.find_git_ancestor(fname)
+        or util.root_pattern("Cargo.toml")(fname)
+    end,
     settings = {
       ["rust-analyzer"] = {
         cargo = { allFeatures = true },
-        -- Optional: run clippy on save (newer setting name)
         check = { command = "clippy" },
+        checkOnSave = { enable = true, },
+        imports = {
+          group = {
+            enable = false,
+          },
+        },
+        completion = {
+          postfix = {
+            enable = false,
+          },
+        },
       },
     },
   })
@@ -236,5 +330,65 @@ lua << EOF
       view = "cmdline",
     },
   })
+
+  require("dressing").setup({})
+
+  require("actions-preview").setup({
+    backend = { "nui", "telescope" },
+  })
+
+  require("gitsigns").setup({
+    signs = {
+      add = { text = "▎" },
+      change = { text = "▎" },
+      delete = { text = "" },
+      topdelete = { text = "" },
+      changedelete = { text = "▎" },
+      untracked = { text = "▎" },
+    },
+    signs_staged = {
+      add = { text = "▎" },
+      change = { text = "▎" },
+      delete = { text = "" },
+      topdelete = { text = "" },
+      changedelete = { text = "▎" },
+    },
+    on_attach = function(buffer)
+      local gs = package.loaded.gitsigns
+
+      local function map(mode, l, r, desc)
+        vim.keymap.set(mode, l, r, { buffer = buffer, desc = desc, silent = true })
+      end
+
+      map("n", "]h", function()
+        if vim.wo.diff then
+          vim.cmd.normal({ "]c", bang = true })
+        else
+          gs.nav_hunk("next")
+        end
+      end, "Next Hunk")
+      map("n", "[h", function()
+        if vim.wo.diff then
+          vim.cmd.normal({ "[c", bang = true })
+        else
+          gs.nav_hunk("prev")
+        end
+      end, "Prev Hunk")
+      map("n", "]H", function() gs.nav_hunk("last") end, "Last Hunk")
+      map("n", "[H", function() gs.nav_hunk("first") end, "First Hunk")
+      map({ "n", "v" }, "<leader>ghs", ":Gitsigns stage_hunk<CR>", "Stage Hunk")
+      map({ "n", "v" }, "<leader>ghr", ":Gitsigns reset_hunk<CR>", "Reset Hunk")
+      map("n", "<leader>ghS", gs.stage_buffer, "Stage Buffer")
+      map("n", "<leader>ghu", gs.undo_stage_hunk, "Undo Stage Hunk")
+      map("n", "<leader>ghR", gs.reset_buffer, "Reset Buffer")
+      map("n", "<leader>ghp", gs.preview_hunk_inline, "Preview Hunk Inline")
+      map("n", "<leader>ghb", function() gs.blame_line({ full = true }) end, "Blame Line")
+      map("n", "<leader>ghB", function() gs.blame() end, "Blame Buffer")
+      map("n", "<leader>ghd", gs.diffthis, "Diff This")
+      map("n", "<leader>ghD", function() gs.diffthis("~") end, "Diff This ~")
+      map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>", "GitSigns Select Hunk")
+    end,
+  })
+
 EOF
 endif

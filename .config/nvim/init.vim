@@ -11,6 +11,8 @@ set smartcase
 set incsearch
 
 set number
+set showmatch
+
 set colorcolumn=80
 set scrolloff=3
 set signcolumn=yes
@@ -38,7 +40,7 @@ syntax enable
 autocmd BufLeave,FocusLost * silent! wall
 
 lua << EOF
-  vim.api.nvim_create_autocmd('Filetype', { pattern = 'rust', command = 'set colorcolumn=100' })
+  vim.api.nvim_create_autocmd('FileType', { pattern = 'rust', command = 'set colorcolumn=100' })
 EOF
 
 "{{{ vim-plug
@@ -86,11 +88,8 @@ call plug#end()
 
 "{{{Look and Feel
 
-colorscheme gruvbox
 let g:gruvbox_contrast_dark = 'hard'
-
-set showmatch
-set number
+colorscheme gruvbox
 
 "}}}
 
@@ -189,6 +188,8 @@ lua << EOF
     command = 'silent! lua vim.highlight.on_yank({ timeout = 500 })'
   })
 
+  require('telescope').load_extension('fzf')
+
   local cmp = require('cmp')
   cmp.setup({
     mapping = cmp.mapping.preset.insert({
@@ -247,7 +248,7 @@ lua << EOF
   })
 
   local lsp = require('lspconfig')
-  local util = require('lspconfig.util')
+  local util = require('lspconfig').util
   local capabilities = require('cmp_nvim_lsp').default_capabilities()
   local lsp_flags = { debounce_text_changes = 150 }
 
@@ -284,39 +285,32 @@ lua << EOF
     automatic_installation = false,
   })
 
-  lsp.ts_ls.setup({
+  vim.lsp.config('ts_ls', {
     on_attach = on_attach,
     flags = lsp_flags,
     capabilities = capabilities,
   })
 
-  lsp.rust_analyzer.setup({
+  vim.lsp.config('rust_analyzer', {
     on_attach = on_attach,
     flags = lsp_flags,
     capabilities = capabilities,
-    filetypes = { "rust" },
-    root_dir = function(fname)
-      return util.find_git_ancestor(fname)
-        or util.root_pattern("Cargo.toml")(fname)
-    end,
+    filetypes = { 'rust' },
+    root_markers = { 'Cargo.toml', '.git' },
     settings = {
-      ["rust-analyzer"] = {
+      ['rust-analyzer'] = {
         cargo = { allFeatures = true },
-        check = { command = "clippy" },
-        checkOnSave = { enable = true, },
-        imports = {
-          group = {
-            enable = false,
-          },
-        },
-        completion = {
-          postfix = {
-            enable = false,
-          },
-        },
+        check = { command = 'clippy' },
+        checkOnSave = { enable = true },
+        imports = { group = { enable = false } },
+        completion = { postfix = { enable = false } },
       },
     },
   })
+
+  for _, name in ipairs({ 'ts_ls', 'rust_analyzer' }) do
+    vim.lsp.enable(name)
+  end
 
   local opts = { noremap=true, silent=true }
   vim.keymap.set('n', '<space>e', vim.diagnostic.open_float, opts)
@@ -342,6 +336,16 @@ lua << EOF
         ["vim.lsp.util.stylize_markdown"] = true,
         ["cmp.entry.get_documentation"] = true, -- requires hrsh7th/nvim-cmp
       },
+    },
+    routes = {
+      { filter = { event = "msg_show" },            opts = { skip = true } },
+      { filter = { event = "msg_showmode" },        opts = { skip = true } },
+      { filter = { event = "msg_history_show" },    opts = { skip = true } },
+      { filter = { event = "search_count" },        opts = { skip = true } },
+      { filter = { event = "cmdline" },             opts = { skip = true } },
+      { filter = { event = "cmdline_show" },        opts = { skip = true } },
+      { filter = { event = "cmdline_pos" },         opts = { skip = true } },
+      { filter = { event = "cmdline_hide" },        opts = { skip = true } },
     },
   })
 

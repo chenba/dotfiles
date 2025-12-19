@@ -13,6 +13,7 @@ set incsearch
 set number
 set showmatch
 
+set splitright
 set colorcolumn=80
 set scrolloff=3
 set signcolumn=yes
@@ -37,6 +38,7 @@ set softtabstop=2
 filetype plugin indent on
 syntax enable
 
+autocmd VimResized * wincmd =
 autocmd BufLeave,FocusLost * silent! wall
 
 lua << EOF
@@ -46,23 +48,25 @@ EOF
 "{{{ vim-plug
 call plug#begin()
 
+  Plug 'windwp/nvim-autopairs'
   Plug 'machakann/vim-sandwich'
   Plug 'tommcdo/vim-exchange'
   Plug 'tpope/vim-repeat'
   Plug 'unblevable/quick-scope'
-  Plug 'nvim-lualine/lualine.nvim'
 
   Plug 'folke/persistence.nvim'
   Plug 'nvim-lua/plenary.nvim'
   Plug 'nvim-telescope/telescope.nvim'
   Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
-  Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+  Plug 'nvim-treesitter/nvim-treesitter', { 'branch': 'master', 'do': ':TSUpdate' }
+  Plug 'nvim-treesitter/nvim-treesitter-context'
 
   Plug 'williamboman/mason.nvim'
   Plug 'williamboman/mason-lspconfig.nvim'
   Plug 'neovim/nvim-lspconfig'
   Plug 'aznhe21/actions-preview.nvim'
 
+  Plug 'nvim-lualine/lualine.nvim'
   Plug 'stevearc/dressing.nvim'
   Plug 'folke/noice.nvim'
   Plug 'MunifTanjim/nui.nvim'
@@ -80,6 +84,7 @@ call plug#begin()
 
   if (!exists('g:vscode'))
     Plug 'knubie/vim-kitty-navigator', {'do': 'cp ./*.py ~/.config/kitty/'}
+    Plug 'mikesmithgh/kitty-scrollback.nvim'
     Plug 'tpope/vim-commentary'
   endif
 
@@ -95,7 +100,7 @@ colorscheme gruvbox
 
 "{{{ Mappings
 
-let mapleader=","
+let mapleader=" "
 
 nnoremap ; :
 nnoremap : ;
@@ -113,6 +118,12 @@ nnoremap <leader>fd <cmd>Telescope lsp_definitions<cr>
 nnoremap <leader>fo <cmd>Telescope lsp_document_symbols<cr>
 nnoremap <leader>ft <cmd>Telescope lsp_workspace_symbols<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
+
+" Copy filepath to clipboard
+nnoremap <leader>yp :let @*=expand('%')<CR>:echo 'Copied: ' . expand('%')<CR>
+nnoremap <leader>yP :let @*=expand('%:p')<CR>:echo 'Copied: ' . expand('%:p')<CR>
+nnoremap <leader>yf :let @*=expand('%:t')<CR>:echo 'Copied: ' . expand('%:t')<CR>
+nnoremap <leader>yd :let @*=expand('%:h')<CR>:echo 'Copied: ' . expand('%:h')<CR>
 
 if exists('g:vscode')
   map <C-J> <C-W>j
@@ -161,11 +172,19 @@ lua << EOF
     end
   })
 
-  vim.api.nvim_create_autocmd("BufReadPre", {
+  vim.api.nvim_create_autocmd("BufWritePost", {
+    pattern = "*.rs",
     callback = function()
-      require("persistence").setup({})
+      local filepath = vim.fn.expand('%:p')
+      local output = vim.fn.system('cargo fmt -- ' .. vim.fn.shellescape(filepath))
+      if vim.v.shell_error == 0 then
+        vim.cmd('checktime')
+      else
+        vim.notify('cargo fmt failed: ' .. output, vim.log.levels.ERROR)
+      end
     end,
   })
+
   vim.keymap.set("n", "<leader>qs", function()
     require("persistence").load()
   end, { desc = "Restore Session" })
@@ -190,7 +209,85 @@ lua << EOF
 
   require('telescope').load_extension('fzf')
 
+  require('kitty-scrollback').setup()
+
+  local function get_target_window_for_split()
+    -- Get all normal windows in the current tab
+    local wins = vim.api.nvim_tabpage_list_wins(0)
+    local normal = {}
+    for _, w in ipairs(wins) do
+      if vim.api.nvim_win_get_config(w).relative == "" then
+        table.insert(normal, w)
+      end
+    end
+
+    local current_win = vim.api.nvim_get_current_win()
+    local win_index = nil
+    for i, w in ipairs(normal) do
+      if w == current_win then
+        win_index = i
+        break
+      end
+    end
+
+    if win_index == 1 and #normal == 1 then
+      -- Leftmost and only window: create new vsplit
+      vim.cmd("vsplit")
+      return vim.api.nvim_get_current_win()
+    elseif win_index == 1 and #normal > 1 then
+      -- Leftmost with window to right: use window to right
+      return normal[2]
+    elseif win_index == 2 then
+      -- Second split: create third vsplit
+      vim.cmd("vsplit")
+      return vim.api.nvim_get_current_win()
+    elseif win_index == 3 then
+      -- Third split: use same window
+      return current_win
+    end
+  end
+
+  local function grep_in_split(opts)
+    local builtin = require("telescope.builtin")
+    local actions = require("telescope.actions")
+    local action_state = require("telescope.actions.state")
+
+    builtin.grep_string(vim.tbl_extend("force", opts or {}, {
+      attach_mappings = function(prompt_bufnr, map)
+        local function open_in_split()
+          local entry = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+
+          local win = get_target_window_for_split()
+          vim.api.nvim_set_current_win(win)
+          vim.cmd("edit " .. vim.fn.fnameescape(entry.filename))
+          if entry.lnum and entry.col then
+            vim.api.nvim_win_set_cursor(0, { entry.lnum, entry.col })
+          end
+        end
+
+        map("i", "<CR>", open_in_split)
+        map("n", "<CR>", open_in_split)
+        return true
+      end,
+    }))
+  end
+
+  vim.keymap.set("n", "<leader>fw", grep_in_split, 
+    { desc = "Grep word under cursor in vsplit" })
+  vim.keymap.set("v", "<leader>fw", 
+    function()
+      local text = table.concat(vim.fn.getreg("v", 1, true), "\n")
+      grep_in_split({ search = text })
+    end, 
+    { desc = "Grep selection in vsplit" })
+
+  require('nvim-autopairs').setup({})
+
   local cmp = require('cmp')
+  local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+  cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+
   cmp.setup({
     mapping = cmp.mapping.preset.insert({
       ['<C-b>'] = cmp.mapping.scroll_docs(-4),
@@ -263,7 +360,16 @@ lua << EOF
 
     local bufopts = { noremap=true, silent=true, buffer=bufnr }
     vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
-    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
+
+    vim.keymap.set('n', 'gd',
+      function()
+        local win = get_target_window_for_split()
+        vim.api.nvim_set_current_win(win)
+        vim.lsp.buf.definition()
+      end,
+      bufopts)
+
+    vim.keymap.set('n', 'gy', vim.lsp.buf.definition, bufopts)
     vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
     vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
@@ -281,7 +387,7 @@ lua << EOF
 
   require("mason").setup()
   require("mason-lspconfig").setup({
-    ensure_installed = { "rust_analyzer", "ts_ls" },
+    ensure_installed = { "rust_analyzer", "ts_ls", "lua_ls", "pyright", "yamlls" },
     automatic_installation = false,
   })
 
@@ -302,13 +408,50 @@ lua << EOF
         cargo = { allFeatures = true },
         check = { command = 'clippy' },
         checkOnSave = { enable = true },
+        formatting = { enable = true },
         imports = { group = { enable = false } },
         completion = { postfix = { enable = false } },
       },
     },
   })
 
-  for _, name in ipairs({ 'ts_ls', 'rust_analyzer' }) do
+  vim.lsp.config('lua_ls', {
+    settings = {
+      Lua = {
+        diagnostics = {
+          globals = { "vim" },
+        },
+        workspace = {
+          library = vim.api.nvim_get_runtime_file("", true),
+          checkThirdParty = false,
+        },
+        telemetry = { enable = false },
+      },
+    },
+  })
+
+  vim.lsp.config('pyright', {
+    on_attach = on_attach,
+    flags = lsp_flags,
+    capabilities = capabilities,
+  })
+
+  vim.lsp.config('yamlls', {
+    on_attach = on_attach,
+    flags = lsp_flags,
+    capabilities = capabilities,
+    settings = {
+      yaml = {
+        schemas = {
+          ["https://json.schemastore.org/github-workflow.json"] = "/.github/workflows/*",
+          ["https://json.schemastore.org/github-action.json"] = "/.github/actions/*/action.{yml,yaml}",
+          ["https://json.schemastore.org/circleciconfig.json"] = "/.circleci/config.yml",
+        },
+      },
+    },
+  })
+
+  for _, name in ipairs({ 'ts_ls', 'rust_analyzer', 'lua_ls', 'pyright', 'yamlls' }) do
     vim.lsp.enable(name)
   end
 
@@ -354,6 +497,145 @@ lua << EOF
   require("actions-preview").setup({
     backend = { "nui", "telescope" },
   })
+
+  local open_commit_in_browser = function()
+    local async = require('gitsigns.async')
+
+    async.create(0, function()
+      local cache = require('gitsigns.cache').cache
+      local bufnr = vim.api.nvim_get_current_buf()
+      local bcache = cache[bufnr]
+
+      if not bcache then
+        print("Not in a git repository")
+        return
+      end
+
+      -- Schedule to ensure we're in the right context
+      if not bcache:schedule() then
+        return
+      end
+
+      local lnum = vim.api.nvim_win_get_cursor(0)[1]
+
+      -- get_blame is an async function that needs to be awaited
+      local blame = bcache:get_blame(lnum)
+
+      if not blame or not blame.commit or not blame.commit.sha then
+        print("No commit found for this line")
+        return
+      end
+
+      local sha = blame.commit.sha
+      if sha == '0000000000000000000000000000000000000000' then
+        print("Line not yet committed")
+        return
+      end
+
+      local remote_url = vim.fn.system("git config --get remote.origin.url"):gsub("%s+", "")
+      if remote_url == "" then
+        print("No git remote found")
+        return
+      end
+
+      -- Convert SSH or HTTPS URL to web URL
+      local web_url = remote_url
+        :gsub("^git@github%.com:", "https://github.com/")
+        :gsub("^https://github%.com/", "https://github.com/")
+        :gsub("%.git$", "")
+
+      local commit_url = web_url .. "/commit/" .. sha
+      vim.fn.system("open '" .. commit_url .. "'")
+      print("Opening commit: " .. blame.commit.abbrev_sha)
+    end)()
+  end
+
+  -- Merge conflict resolution functions
+  local function find_conflict_markers()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+    local conflict_start, conflict_middle, conflict_end
+
+    -- Search backwards for conflict start
+    for i = cursor_line, 1, -1 do
+      if lines[i] and lines[i]:match("^<<<<<<<") then
+        conflict_start = i
+        break
+      end
+    end
+
+    if not conflict_start then
+      return nil
+    end
+
+    -- Search forward for middle and end from conflict start
+    for i = conflict_start + 1, #lines do
+      if lines[i] and lines[i]:match("^=======") and not conflict_middle then
+        conflict_middle = i
+      elseif lines[i] and lines[i]:match("^>>>>>>>") then
+        conflict_end = i
+        break
+      end
+    end
+
+    if conflict_start and conflict_middle and conflict_end then
+      return {
+        start_line = conflict_start,
+        middle_line = conflict_middle,
+        end_line = conflict_end
+      }
+    end
+
+    return nil
+  end
+
+  local function resolve_conflict(choice)
+    local conflict = find_conflict_markers()
+    if not conflict then
+      print("No conflict found at cursor position")
+      return
+    end
+
+    local bufnr = vim.api.nvim_get_current_buf()
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+    local current_changes = {}
+    local incoming_changes = {}
+
+    -- Extract current changes (between start and middle)
+    for i = conflict.start_line + 1, conflict.middle_line - 1 do
+      table.insert(current_changes, lines[i])
+    end
+
+    -- Extract incoming changes (between middle and end)
+    for i = conflict.middle_line + 1, conflict.end_line - 1 do
+      table.insert(incoming_changes, lines[i])
+    end
+
+    local resolution = {}
+    if choice == "current" then
+      resolution = current_changes
+    elseif choice == "incoming" then
+      resolution = incoming_changes
+    elseif choice == "both" then
+      vim.list_extend(resolution, current_changes)
+      vim.list_extend(resolution, incoming_changes)
+    end
+
+    -- Replace the conflict with the resolution
+    vim.api.nvim_buf_set_lines(bufnr, conflict.start_line - 1, conflict.end_line, false, resolution)
+
+    print("Conflict resolved: accepted " .. choice)
+  end
+
+  vim.keymap.set('n', '<leader>mc', function() resolve_conflict('current') end,
+    { desc = "Accept current changes" })
+  vim.keymap.set('n', '<leader>mi', function() resolve_conflict('incoming') end,
+    { desc = "Accept incoming changes" })
+  vim.keymap.set('n', '<leader>mb', function() resolve_conflict('both') end,
+    { desc = "Accept both changes" })
 
   require("gitsigns").setup({
     signs = {
@@ -404,9 +686,37 @@ lua << EOF
       map("n", "<leader>ghB", function() gs.blame() end, "Blame Buffer")
       map("n", "<leader>ghd", gs.diffthis, "Diff This")
       map("n", "<leader>ghD", function() gs.diffthis("~") end, "Diff This ~")
+      map("n", "<leader>gho", open_commit_in_browser, "Open Commit in Browser")
       map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>", "GitSigns Select Hunk")
     end,
   })
 
+  require("nvim-treesitter.configs").setup({
+    ensure_installed = { 
+      "rust","python","typescript","tsx",
+      "lua","vim","vimdoc",
+      "bash",
+      "json","toml","markdown","markdown_inline",
+      "diff","gitcommit",
+    },
+    highlight = {
+      enable = true,
+      additional_vim_regex_highlighting = false,
+    },
+    indent = {
+      enable = true,
+    },
+  })
+
+  require("treesitter-context").setup({
+    enable = true,
+    max_lines = 3,
+    trim_scope = 'outer',
+  })
+
+  require("persistence").setup({
+    dir = vim.fn.expand(vim.fn.stdpath("state") .. "/sessions/"),
+    options = { "buffers", "curdir", "tabpages", "winsize" },
+  })
 EOF
 endif

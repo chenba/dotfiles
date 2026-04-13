@@ -42,7 +42,15 @@ autocmd VimResized * wincmd =
 autocmd BufLeave,FocusLost * silent! wall
 
 lua << EOF
-  vim.api.nvim_create_autocmd('FileType', { pattern = 'rust', command = 'set colorcolumn=100' })
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'rust',
+    callback = function()
+      vim.opt_local.colorcolumn = '100'
+      vim.opt_local.shiftwidth = 4
+      vim.opt_local.softtabstop = 4
+      vim.opt_local.tabstop = 4
+    end
+  })
 EOF
 
 "{{{ vim-plug
@@ -172,15 +180,63 @@ lua << EOF
     end
   })
 
+  local function format_rust_file(filepath)
+    -- If no filepath provided, use current buffer
+    if not filepath then
+      filepath = vim.fn.expand('%:p')
+    end
+
+    -- Ensure filepath is a string and not empty
+    if not filepath or type(filepath) ~= 'string' or filepath == '' then
+      return
+    end
+
+    -- Only format Rust files
+    if not string.match(filepath, '%.rs$') then
+      return
+    end
+
+    -- Find the Cargo.toml directory
+    local cargo_dir = vim.fn.fnamemodify(vim.fn.findfile('Cargo.toml', filepath .. ';'), ':h')
+
+    if cargo_dir == '' then
+      vim.notify('No Cargo.toml found for: ' .. filepath, vim.log.levels.WARN)
+      return
+    end
+
+    -- Run cargo fmt from the project root
+    local cmd = string.format('cd %s && cargo fmt -- %s',
+      vim.fn.shellescape(cargo_dir),
+      vim.fn.shellescape(filepath))
+    local output = vim.fn.system(cmd)
+
+    if vim.v.shell_error == 0 then
+      vim.cmd('checktime')
+    else
+      vim.notify('cargo fmt: syntax error', vim.log.levels.WARN)
+    end
+  end
+
   vim.api.nvim_create_autocmd("BufWritePost", {
     pattern = "*.rs",
-    callback = function()
-      local filepath = vim.fn.expand('%:p')
-      local output = vim.fn.system('cargo fmt -- ' .. vim.fn.shellescape(filepath))
-      if vim.v.shell_error == 0 then
-        vim.cmd('checktime')
-      else
-        vim.notify('cargo fmt failed: ' .. output, vim.log.levels.ERROR)
+    callback = format_rust_file,
+  })
+
+  vim.api.nvim_create_autocmd({"BufLeave", "FocusLost"}, {
+    pattern = "*.rs",
+    callback = function(ev)
+      local filepath = vim.api.nvim_buf_get_name(ev.buf)
+      if filepath ~= '' and vim.fn.filereadable(filepath) == 1 then
+        -- Wait for auto-save to complete, then format
+        vim.defer_fn(function()
+          -- Double-check the buffer still exists and has the same file
+          if vim.api.nvim_buf_is_valid(ev.buf) then
+            local current_file = vim.api.nvim_buf_get_name(ev.buf)
+            if current_file == filepath then
+              format_rust_file(filepath)  -- Pass the filepath explicitly
+            end
+          end
+        end, 100)
       end
     end,
   })
@@ -207,9 +263,109 @@ lua << EOF
     command = 'silent! lua vim.highlight.on_yank({ timeout = 500 })'
   })
 
+  -- Configure Telescope
+  local telescope_actions = require('telescope.actions')
+  local telescope_action_state = require('telescope.actions.state')
+
+  require('telescope').setup({
+    defaults = {
+      preview = {
+        filetype_hook = function(_, _, opts)
+          vim.wo[opts.winid].number = true
+          return true
+        end,
+      },
+      mappings = {
+        i = {
+          ["<C-d>"] = telescope_actions.delete_buffer,
+        },
+        n = {
+          ["<C-d>"] = telescope_actions.delete_buffer,
+          ["dd"] = telescope_actions.delete_buffer,
+        },
+      },
+    },
+    pickers = {
+      buffers = {
+        sort_mru = true,
+      },
+      lsp_document_symbols = {
+        entry_maker = function(entry)
+          local make_entry = require('telescope.make_entry')
+          local entry_display = require('telescope.pickers.entry_display')
+          local displayer = entry_display.create {
+            separator = ' ',
+            hl_chars = { ['['] = 'TelescopeBorder', [']'] = 'TelescopeBorder' },
+            items = {
+              { width = 5 },
+              { width = 25 },
+              { remaining = true },
+            },
+          }
+          local lsp_type_highlight = {
+            ['Class']     = 'TelescopeResultsClass',
+            ['Function']  = 'TelescopeResultsFunction',
+            ['Method']    = 'TelescopeResultsMethod',
+            ['Variable']  = 'TelescopeResultsVariable',
+            ['Field']     = 'TelescopeResultsField',
+            ['Interface'] = 'TelescopeResultsOperator',
+            ['Module']    = 'TelescopeResultsStruct',
+            ['Struct']    = 'TelescopeResultsStruct',
+            ['Constant']  = 'TelescopeResultsConstant',
+            ['Property']  = 'TelescopeResultsField',
+          }
+          local default_entry = make_entry.gen_from_lsp_symbols({})(entry)
+          if not default_entry then return nil end
+          default_entry.display = function(e)
+            return displayer {
+              { tostring(e.lnum), 'TelescopeResultsLineNr' },
+              e.symbol_name,
+              { '[' .. (e.symbol_type or ''):lower() .. ']',
+                lsp_type_highlight[e.symbol_type] or 'TelescopeResultsComment' },
+            }
+          end
+          return default_entry
+        end,
+      },
+    },
+  })
+
   require('telescope').load_extension('fzf')
 
-  require('kitty-scrollback').setup()
+  require('kitty-scrollback').setup({
+    {
+      keymaps_enabled = true,
+      restore_options = true,
+      callbacks = {
+        after_ready = function()
+          -- After a yank, the plugin moves cursor to bottom. Restore position.
+          vim.api.nvim_create_autocmd('TextYankPost', {
+            buffer = 0,
+            callback = function()
+              if vim.v.event.operator == 'y' then
+                local pos = vim.w.ksb_pre_yank_pos
+                local win = vim.api.nvim_get_current_win()
+                if pos then
+                  -- Use defer_fn to run after the plugin's own vim.schedule cursor move
+                  local view = vim.w.ksb_pre_yank_view
+                  vim.defer_fn(function()
+                    pcall(vim.api.nvim_win_set_cursor, win, pos)
+                    if view then vim.fn.winrestview(view) end
+                  end, 10)
+                end
+              end
+            end,
+          })
+          -- Store cursor position and view before each yank
+          vim.keymap.set({ 'n', 'v' }, 'y', function()
+            vim.w.ksb_pre_yank_pos = vim.api.nvim_win_get_cursor(0)
+            vim.w.ksb_pre_yank_view = vim.fn.winsaveview()
+            return 'y'
+          end, { buffer = true, expr = true, nowait = true })
+        end,
+      },
+    },
+  })
 
   local function get_target_window_for_split()
     -- Get all normal windows in the current tab
@@ -359,7 +515,6 @@ lua << EOF
     vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 
     local bufopts = { noremap=true, silent=true, buffer=bufnr }
-    vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
 
     vim.keymap.set('n', 'gd',
       function()
@@ -369,6 +524,7 @@ lua << EOF
       end,
       bufopts)
 
+    vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
     vim.keymap.set('n', 'gy', vim.lsp.buf.definition, bufopts)
     vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
@@ -399,13 +555,13 @@ lua << EOF
 
   vim.lsp.config('rust_analyzer', {
     on_attach = on_attach,
-    flags = lsp_flags,
+    flags = vim.tbl_extend('force', lsp_flags, { allow_incremental_sync = false }),
     capabilities = capabilities,
     filetypes = { 'rust' },
     root_markers = { 'Cargo.toml', '.git' },
     settings = {
       ['rust-analyzer'] = {
-        cargo = { allFeatures = true },
+        cargo = { allFeatures = true, allTargets = true, cfgs = { test = "" } },
         check = { command = 'clippy' },
         checkOnSave = { enable = true },
         formatting = { enable = true },
@@ -550,6 +706,87 @@ lua << EOF
     end)()
   end
 
+  local open_file_in_browser = function()
+    local filepath = vim.fn.expand('%:p')
+    local git_root = vim.fn.systemlist('git rev-parse --show-toplevel')[1]
+
+    if vim.v.shell_error ~= 0 or not git_root then
+      print("Not in a git repository")
+      return
+    end
+
+    -- Get relative path from git root
+    local relative_path = filepath:sub(#git_root + 2)
+
+    -- Get current branch
+    local branch = vim.fn.systemlist('git rev-parse --abbrev-ref HEAD')[1]
+    if vim.v.shell_error ~= 0 then
+      print("Could not determine current branch")
+      return
+    end
+
+    -- Get remote URL
+    local remote_url = vim.fn.system("git config --get remote.origin.url"):gsub("%s+", "")
+    if remote_url == "" then
+      print("No git remote found")
+      return
+    end
+
+    -- Convert SSH or HTTPS URL to web URL
+    local web_url = remote_url
+      :gsub("^git@github%.com:", "https://github.com/")
+      :gsub("^https://github%.com/", "https://github.com/")
+      :gsub("%.git$", "")
+
+    -- Get current line number
+    local line_num = vim.api.nvim_win_get_cursor(0)[1]
+
+    local file_url = web_url .. "/blob/" .. branch .. "/" .. relative_path .. "#L" .. line_num
+    vim.fn.system("open '" .. file_url .. "'")
+    print("Opening: " .. relative_path .. "#L" .. line_num)
+  end
+
+  _G.open_file_range_in_browser = function()
+    local filepath = vim.fn.expand('%:p')
+    local git_root = vim.fn.systemlist('git rev-parse --show-toplevel')[1]
+
+    if vim.v.shell_error ~= 0 or not git_root then
+      print("Not in a git repository")
+      return
+    end
+
+    -- Get relative path from git root
+    local relative_path = filepath:sub(#git_root + 2)
+
+    -- Get current branch
+    local branch = vim.fn.systemlist('git rev-parse --abbrev-ref HEAD')[1]
+    if vim.v.shell_error ~= 0 then
+      print("Could not determine current branch")
+      return
+    end
+
+    -- Get remote URL
+    local remote_url = vim.fn.system("git config --get remote.origin.url"):gsub("%s+", "")
+    if remote_url == "" then
+      print("No git remote found")
+      return
+    end
+
+    -- Convert SSH or HTTPS URL to web URL
+    local web_url = remote_url
+      :gsub("^git@github%.com:", "https://github.com/")
+      :gsub("^https://github%.com/", "https://github.com/")
+      :gsub("%.git$", "")
+
+    -- Get visual selection line range
+    local start_line = vim.fn.getpos("'<")[2]
+    local end_line = vim.fn.getpos("'>")[2]
+
+    local file_url = web_url .. "/blob/" .. branch .. "/" .. relative_path .. "#L" .. start_line .. "-L" .. end_line
+    vim.fn.system("open '" .. file_url .. "'")
+    print("Opening: " .. relative_path .. "#L" .. start_line .. "-L" .. end_line)
+  end
+
   -- Merge conflict resolution functions
   local function find_conflict_markers()
     local bufnr = vim.api.nvim_get_current_buf()
@@ -637,6 +874,74 @@ lua << EOF
   vim.keymap.set('n', '<leader>mb', function() resolve_conflict('both') end,
     { desc = "Accept both changes" })
 
+  -- Navigate to next/prev changed hunk across all git-tracked buffers in the repo
+  local function nav_hunk_repo(direction)
+    local cache = require('gitsigns.cache').cache
+    local current_buf = vim.api.nvim_get_current_buf()
+    local current_line = vim.api.nvim_win_get_cursor(0)[1]
+
+    -- Collect all (bufnr, lnum) pairs for hunks across all tracked buffers
+    -- keyed by absolute filepath so we can sort them consistently
+    local entries = {}
+    for bufnr, bcache in pairs(cache) do
+      local hunks = bcache.hunks or {}
+      local filepath = vim.api.nvim_buf_get_name(bufnr)
+      for _, hunk in ipairs(hunks) do
+        table.insert(entries, {
+          bufnr = bufnr,
+          filepath = filepath,
+          lnum = math.max(hunk.added.start, 1),
+        })
+      end
+    end
+
+    if vim.tbl_isempty(entries) then
+      vim.notify('No hunks in repo', vim.log.levels.INFO)
+      return
+    end
+
+    -- Sort by filepath then lnum for deterministic ordering
+    table.sort(entries, function(a, b)
+      if a.filepath ~= b.filepath then return a.filepath < b.filepath end
+      return a.lnum < b.lnum
+    end)
+
+    -- Find the index of the next/prev hunk relative to current position
+    local current_path = vim.api.nvim_buf_get_name(current_buf)
+    local target_idx = nil
+
+    if direction == 'next' then
+      for i, e in ipairs(entries) do
+        if e.filepath > current_path or (e.filepath == current_path and e.lnum > current_line) then
+          target_idx = i
+          break
+        end
+      end
+      if not target_idx then target_idx = 1 end  -- wrap around
+    else
+      for i = #entries, 1, -1 do
+        local e = entries[i]
+        if e.filepath < current_path or (e.filepath == current_path and e.lnum < current_line) then
+          target_idx = i
+          break
+        end
+      end
+      if not target_idx then target_idx = #entries end  -- wrap around
+    end
+
+    local target = entries[target_idx]
+    if vim.api.nvim_get_current_buf() ~= target.bufnr then
+      vim.cmd('buffer ' .. target.bufnr)
+    end
+    vim.api.nvim_win_set_cursor(0, { target.lnum, 0 })
+    vim.cmd('normal! zv')  -- open fold if needed
+  end
+
+  vim.keymap.set('n', '<leader>gn', function() nav_hunk_repo('next') end,
+    { desc = 'Next hunk (repo-wide)', silent = true })
+  vim.keymap.set('n', '<leader>gp', function() nav_hunk_repo('prev') end,
+    { desc = 'Prev hunk (repo-wide)', silent = true })
+
   require("gitsigns").setup({
     signs = {
       add = { text = "▎" },
@@ -687,6 +992,41 @@ lua << EOF
       map("n", "<leader>ghd", gs.diffthis, "Diff This")
       map("n", "<leader>ghD", function() gs.diffthis("~") end, "Diff This ~")
       map("n", "<leader>gho", open_commit_in_browser, "Open Commit in Browser")
+      map("n", "<leader>ghf", open_file_in_browser, "Open File in Browser")
+      vim.keymap.set("x", "<leader>ghf", function()
+        -- Store the current visual selection positions
+        local start_line = vim.fn.line("v")
+        local end_line = vim.fn.line(".")
+        -- Ensure start_line is less than end_line
+        if start_line > end_line then
+          start_line, end_line = end_line, start_line
+        end
+        -- Function will automatically exit visual mode after execution
+        local filepath = vim.fn.expand('%:p')
+        local git_root = vim.fn.systemlist('git rev-parse --show-toplevel')[1]
+        if vim.v.shell_error ~= 0 or not git_root then
+          print("Not in a git repository")
+          return
+        end
+        local relative_path = filepath:sub(#git_root + 2)
+        local branch = vim.fn.systemlist('git rev-parse --abbrev-ref HEAD')[1]
+        if vim.v.shell_error ~= 0 then
+          print("Could not determine current branch")
+          return
+        end
+        local remote_url = vim.fn.system("git config --get remote.origin.url"):gsub("%s+", "")
+        if remote_url == "" then
+          print("No git remote found")
+          return
+        end
+        local web_url = remote_url
+          :gsub("^git@github%.com:", "https://github.com/")
+          :gsub("^https://github%.com/", "https://github.com/")
+          :gsub("%.git$", "")
+        local file_url = web_url .. "/blob/" .. branch .. "/" .. relative_path .. "#L" .. start_line .. "-L" .. end_line
+        vim.fn.system("open '" .. file_url .. "'")
+        print("Opening: " .. relative_path .. "#L" .. start_line .. "-L" .. end_line)
+      end, { buffer = buffer, desc = "Open File Range in Browser", silent = true })
       map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>", "GitSigns Select Hunk")
     end,
   })

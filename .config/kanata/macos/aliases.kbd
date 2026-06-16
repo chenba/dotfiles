@@ -1,0 +1,29 @@
+(defvar
+  time-repress-timeout 75
+  hold-timeout         175
+  tt $time-repress-timeout
+  ht $hold-timeout
+)
+
+(defalias
+  esc-nav (tap-hold-release $tt $ht esc (layer-toggle nav))
+  quot-nav (tap-hold-release $tt $ht ' (layer-toggle nav))
+  ;; v-nav (tap-hold-release $tt $ht v (layer-toggle nav))
+  ;; n-nav (tap-hold-release $tt $ht n (layer-toggle nav))
+
+  ;; home row mods
+  a-ctl    (tap-hold-release $tt $ht a ctl)
+  scln-ctl (tap-hold-release $tt $ht ; ctl)
+
+  ;; macos
+  newtab M-t
+  deltab M-w
+  ltab   M-S-[
+  rtab   M-S-]
+  yank   M-c
+  put    M-v
+  undo   M-z
+  grep   M-f
+  shcat  C-spc
+  rcast  A-spc
+)

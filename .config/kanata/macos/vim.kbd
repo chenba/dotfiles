@@ -1,0 +1,93 @@
+;; Vim-ish
+;; `jk` to enter, `i` to exit
+
+(defvirtualkeys
+  enter-vim (layer-switch vim-normal)
+)
+
+(defchordsv2
+  (j k) (on-press tap-vkey enter-vim) 70 first-release (vim-normal vim-visual)
+)
+
+(defalias
+  jk-vim (macro (sequence 100 hidden-delay-type) 5 j)
+
+  vim-ins (layer-switch base)
+  vim-nrm (layer-switch vim-normal)
+  vim-vis (layer-switch vim-visual)
+
+  vim-a   (multi right (layer-switch base))
+  vim-o   (multi M-right ret (layer-switch base))
+
+  vim-yank-normal  M-c
+  vim-paste-normal M-v
+  vim-undo         M-z
+  vim-redo         S-M-z
+
+  vim-yank-visual (multi M-c (layer-switch vim-normal))
+  vim-cut-visual  (multi M-x (layer-switch vim-normal))
+)
+
+(defseq
+  enter-vim (j k)
+)
+
+;; Vim-ish normal mode
+(deflayermap (vim-normal)
+  _   XX
+
+  i    @vim-ins
+  esc  @vim-ins
+  caps @vim-ins
+
+  h   left
+  j   down
+  k   up
+  l   right
+
+  w   A-right
+  b   A-left
+  e   A-right
+
+  0   M-left
+  4   M-right
+  g   M-up
+
+  v   @vim-vis
+  y   @vim-yank-normal
+  p   @vim-paste-normal
+  u   @vim-undo
+  r   @vim-redo
+  x   del
+
+  a   @vim-a
+  o   @vim-o
+)
+
+;; Vim-ish visual mode
+(deflayermap (vim-visual)
+  _   XX
+
+  i    @vim-ins
+  esc  @vim-nrm
+  caps @vim-nrm
+  v    @vim-nrm
+
+  h   S-left
+  j   S-down
+  k   S-up
+  l   S-right
+
+  w   S-A-right
+  b   S-A-left
+  e   S-A-right
+
+  0   S-M-left
+  4   S-M-right
+  g   S-M-up
+
+  y   @vim-yank-visual
+  d   @vim-cut-visual
+  x   @vim-cut-visual
+  p   @vim-paste-normal
+)

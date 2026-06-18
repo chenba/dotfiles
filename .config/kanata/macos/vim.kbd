@@ -10,8 +10,6 @@
 )
 
 (defalias
-  jk-vim (macro (sequence 100 hidden-delay-type) 5 j)
-
   vim-ins (layer-switch base)
   vim-nrm (layer-switch vim-normal)
   vim-vis (layer-switch vim-visual)
@@ -26,10 +24,6 @@
 
   vim-yank-visual (multi M-c (layer-switch vim-normal))
   vim-cut-visual  (multi M-x (layer-switch vim-normal))
-)
-
-(defseq
-  enter-vim (j k)
 )
 
 ;; Vim-ish normal mode

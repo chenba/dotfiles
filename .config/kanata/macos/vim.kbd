@@ -14,8 +14,9 @@
   vim-nrm (layer-switch vim-normal)
   vim-vis (layer-switch vim-visual)
 
-  vim-a   (multi right (layer-switch base))
-  vim-o   (multi M-right ret (layer-switch base))
+  vim-caret (macro M-left 5 A-right 5 A-left)
+  vim-a     (multi right (layer-switch base))
+  vim-o     (multi M-right ret (layer-switch base))
 
   vim-yank-normal  M-c
   vim-paste-normal M-v
@@ -39,6 +40,7 @@
   k   up
   l   right
 
+  6   @vim-caret
   w   A-right
   b   A-left
   e   A-right

@@ -3,6 +3,8 @@
     "Apple Internal Keyboard / Trackpad"
   )
   process-unmapped-keys no
+  concurrent-tap-hold yes
+  chords-v2-min-idle 5
 )
 
 ;; Kanata config for MacBook Pro M4 Pro Internal Keyboard (ANSI US)
@@ -44,3 +46,4 @@
 ;; )
 
 (include aliases.kbd)
+(include vim.kbd)

@@ -1,0 +1,27 @@
+(defcfg
+  macos-dev-names-include (
+    "Keychron Q1 Pro"
+  )
+  process-unmapped-keys no
+  concurrent-tap-hold yes
+  chords-v2-min-idle 5
+  danger-enable-cmd yes
+)
+
+
+(defsrc
+  w
+  j k l
+)
+
+(deflayer base
+  @w-apps
+  j k l
+)
+
+(deflayer nav
+  _
+  _ _ _
+)
+
+(include aliases.kbd)

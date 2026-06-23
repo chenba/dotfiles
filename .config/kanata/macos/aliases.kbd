@@ -5,15 +5,16 @@
   ht $hold-timeout
 )
 
+;; home row mods
+(defalias
+  a-ctl    (tap-hold-release $tt $ht a ctl)
+  scln-ctl (tap-hold-release $tt $ht ; ctl)
+)
+
+;; nav
 (defalias
   esc-nav (tap-hold-release $tt $ht esc (layer-toggle nav))
   quot-nav (tap-hold-release $tt $ht ' (layer-toggle nav))
-  ;; v-nav (tap-hold-release $tt $ht v (layer-toggle nav))
-  ;; n-nav (tap-hold-release $tt $ht n (layer-toggle nav))
-
-  ;; home row mods
-  a-ctl    (tap-hold-release $tt $ht a ctl)
-  scln-ctl (tap-hold-release $tt $ht ; ctl)
 
   ;; macos
   newtab M-t
@@ -26,4 +27,24 @@
   grep   M-f
   shcat  C-spc
   rcast  A-spc
+)
+
+;; apps and windows
+(defvirtualkeys
+  firefox    (cmd osascript -e r#"activate application "Firefox""#)
+  ff-nightly (cmd osascript -e r#"activate application "Firefox Nightly""#)
+  kitty      (cmd osascript -e r#"activate application "kitty""#)
+)
+(defalias
+  w-apps     (tap-hold-release $tt $ht w (layer-toggle apps-windows))
+  firefox    (on-press tap-vkey firefox)
+  ff-nightly (on-press tap-vkey ff-nightly)
+  kitty      (on-press tap-vkey kitty)
+)
+(deflayermap (apps-windows)
+  _   XX
+
+  j @firefox
+  k @kitty
+  l @ff-nightly
 )

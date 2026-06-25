@@ -34,16 +34,27 @@
   firefox    (cmd osascript -e r#"activate application "Firefox""#)
   ff-nightly (cmd osascript -e r#"activate application "Firefox Nightly""#)
   kitty      (cmd osascript -e r#"activate application "kitty""#)
+  v-cmd      lmet
 )
 (defalias
-  w-apps     (tap-hold-release $tt $ht w (layer-toggle apps-windows))
+  s-apps     (tap-hold-tap-keys $tt $ht 
+               s 
+               (multi (layer-toggle apps-windows) (on-release release-vkey v-cmd))
+               (a e t)
+             )
   firefox    (on-press tap-vkey firefox)
   ff-nightly (on-press tap-vkey ff-nightly)
   kitty      (on-press tap-vkey kitty)
+  app-sw     (macro (on-press press-vkey v-cmd) 5 tab)
 )
 (deflayermap (apps-windows)
   _   XX
 
+  u A-tab
+  i S-tab
+  , @ltab
+  . @rtab
+  o @app-sw
   j @firefox
   k @kitty
   l @ff-nightly

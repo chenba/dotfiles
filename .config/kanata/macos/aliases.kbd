@@ -27,20 +27,21 @@
   grep   M-f
   shcat  C-spc
   rcast  A-spc
+  lock   C-M-q
 )
 
 ;; apps and windows
 (defvirtualkeys
   firefox    (cmd osascript -e r#"activate application "Firefox""#)
-  ff-nightly (cmd osascript -e r#"activate application "Firefox Nightly""#)
+  ff-nightly (cmd osascript -e r#"activate application "Macintosh HD:Applications:Firefox Nightly.app""#)
   kitty      (cmd osascript -e r#"activate application "kitty""#)
   v-cmd      lmet
 )
 (defalias
-  s-apps     (tap-hold-tap-keys $tt $ht 
-               s 
+  f-apps     (tap-hold-tap-keys $tt $ht 
+               f 
                (multi (layer-toggle apps-windows) (on-release release-vkey v-cmd))
-               (a e t)
+               (a e)
              )
   firefox    (on-press tap-vkey firefox)
   ff-nightly (on-press tap-vkey ff-nightly)

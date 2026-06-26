@@ -10,12 +10,12 @@
 
 
 (defsrc
-  s
+  f
   j k l
 )
 
 (deflayer base
-  @s-apps
+  @f-apps
   j k l
 )
 

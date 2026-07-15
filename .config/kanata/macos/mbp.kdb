@@ -30,8 +30,8 @@
 
 (deflayer nav
   _         _         _         _         _         _         _         _         _         _         _         _         _
-  _         _         _         _         _         _         _         _         _         _         _         _         _         _
-  _         _         _         _         _         @newtab   @yank     @undo     pgup      _         @put      _         _     _
+  _         _         _         _         _         _         _         _         _         _         _         _         _         @quit
+  _         _         _         _         _         @newtab   @yank     @undo     pgup      _         @put      _         _         _
   _         @shcat    _         _         _         _         left      down      up        right     @shcat    @rcast    _
   _         _         @deltab   _         _         _         _         pgdn      _         _         @grep     _         _
             _         _         _                   _                                       _         _         _         _         _
@@ -47,4 +47,4 @@
 ;; )
 
 (include aliases.kbd)
-;; (include vim.kbd)
+(include vim.kbd)

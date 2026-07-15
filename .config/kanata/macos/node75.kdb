@@ -45,4 +45,4 @@
 ;; )
 
 (include aliases.kbd)
-;; (include vim.kbd)
+(include vim.kbd)

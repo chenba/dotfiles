@@ -6,7 +6,7 @@
 )
 
 (defchordsv2
-  (j k) (on-press tap-vkey enter-vim) 70 first-release (vim-normal vim-visual)
+  (j k) (on-press tap-vkey enter-vim) 80 first-release (vim-normal vim-visual)
 )
 
 (defalias
@@ -23,8 +23,8 @@
   vim-undo         M-z
   vim-redo         S-M-z
 
-  vim-yank-visual (multi M-c (layer-switch vim-normal))
-  vim-cut-visual  (multi M-x (layer-switch vim-normal))
+  vim-yank-visual (macro M-c 20 (on-press tap-vkey enter-vim))
+  vim-cut-visual  (macro M-x 20 (on-press tap-vkey enter-vim))
 )
 
 ;; Vim-ish normal mode

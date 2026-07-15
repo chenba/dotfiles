@@ -2,29 +2,35 @@
 ;; `jk` to enter, `i` to exit
 
 (defvirtualkeys
-  enter-vim (layer-switch vim-normal)
+  hud-vim-nrm (cmd hud r#"Normal Mode"#)
+  hud-vim-vis (cmd hud r#"Visual Mode"#)
+  hud-dismiss (cmd hud -x)
+
+  vim-nrm (multi (layer-switch vim-normal) (on-press tap-vkey hud-vim-nrm))
+  vim-ins (multi (layer-switch base) (on-press tap-vkey hud-dismiss))
+  vim-vis (multi (layer-switch vim-visual) (on-press tap-vkey hud-vim-vis))
 )
 
 (defchordsv2
-  (j k) (on-press tap-vkey enter-vim) 80 first-release (vim-normal vim-visual)
+  (j k) @vim-nrm 80 first-release (vim-normal vim-visual)
 )
 
 (defalias
-  vim-ins (layer-switch base)
-  vim-nrm (layer-switch vim-normal)
-  vim-vis (layer-switch vim-visual)
+  vim-ins (on-press tap-vkey vim-ins)
+  vim-nrm (on-press tap-vkey vim-nrm)
+  vim-vis (on-press tap-vkey vim-vis)
 
   vim-caret (macro M-left 5 A-right 5 A-left)
-  vim-a     (multi right (layer-switch base))
-  vim-o     (multi M-right ret (layer-switch base))
+  vim-a     (macro right 5 (on-press tap-vkey vim-ins))
+  vim-o     (macro M-right 5 ret 5 (on-press tap-vkey vim-ins))
 
   vim-yank-normal  M-c
   vim-paste-normal M-v
   vim-undo         M-z
   vim-redo         S-M-z
 
-  vim-yank-visual (macro M-c 20 (on-press tap-vkey enter-vim))
-  vim-cut-visual  (macro M-x 20 (on-press tap-vkey enter-vim))
+  vim-yank-visual (macro M-c 20 (on-press tap-vkey vim-nrm))
+  vim-cut-visual  (macro M-x 20 (on-press tap-vkey vim-nrm))
 )
 
 ;; Vim-ish normal mode

@@ -1,0 +1,79 @@
+#!/bin/sh
+set -eu
+
+usage() {
+  cat >&2 <<'EOF'
+usage: hud [--] message...
+       printf 'message' | hud
+       hud --dismiss
+
+Displays a persistent Hammerspoon canvas styled after VimMode.spoon.
+A new message replaces the current one. It remains visible until dismissed.
+EOF
+}
+
+ensure_hammerspoon_running() {
+  if /usr/bin/pgrep -x Hammerspoon >/dev/null 2>&1; then
+    return
+  fi
+
+  if ! /usr/bin/open -g -a Hammerspoon; then
+    echo "hud: could not launch Hammerspoon" >&2
+    exit 69
+  fi
+
+  # A hammerspoon:// event sent while Hammerspoon is still launching is lost.
+  # Wait for the process, then give its init.lua a moment to bind the handler.
+  attempts=0
+  while ! /usr/bin/pgrep -x Hammerspoon >/dev/null 2>&1; do
+    attempts=$((attempts + 1))
+    if [ "$attempts" -ge 50 ]; then
+      echo "hud: Hammerspoon did not start" >&2
+      exit 69
+    fi
+    /bin/sleep 0.1
+  done
+  /bin/sleep 1.5
+}
+
+if [ "$#" -eq 1 ]; then
+  case "$1" in
+    --dismiss|--clear|-x)
+      ensure_hammerspoon_running
+      /usr/bin/open -g 'hammerspoon://cli-hud?dismiss=1'
+      exit 0
+      ;;
+  esac
+fi
+
+if [ "$#" -gt 0 ] && [ "$1" = "--" ]; then
+  shift
+fi
+
+if [ "$#" -eq 0 ]; then
+  if [ -t 0 ]; then
+    usage
+    exit 64
+  fi
+  message=$(/bin/cat)
+else
+  message=$*
+fi
+
+if [ -z "$message" ]; then
+  echo "hud: no message supplied" >&2
+  exit 64
+fi
+
+# URL-safe, unpadded Base64 keeps quotes, Unicode, newlines, &, ?, and spaces
+# out of the hammerspoon:// query string.
+payload=$(
+  printf '%s' "$message" |
+    /usr/bin/base64 |
+    /usr/bin/tr '+/' '-_' |
+    /usr/bin/tr -d '\n' |
+    /usr/bin/tr -d '='
+)
+
+ensure_hammerspoon_running
+/usr/bin/open -g "hammerspoon://cli-hud?data=$payload"

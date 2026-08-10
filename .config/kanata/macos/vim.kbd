@@ -6,8 +6,8 @@
   hud-vim-vis (cmd hud r#"Visual Mode"#)
   hud-dismiss (cmd hud -x)
 
-  vim-nrm (multi (layer-switch vim-normal) (on-press tap-vkey hud-vim-nrm))
   vim-ins (multi (layer-switch base) (on-press tap-vkey hud-dismiss))
+  vim-nrm (multi (layer-switch vim-normal) (on-press tap-vkey hud-vim-nrm))
   vim-vis (multi (layer-switch vim-visual) (on-press tap-vkey hud-vim-vis))
 )
 
@@ -21,7 +21,7 @@
   vim-vis (on-press tap-vkey vim-vis)
 
   vim-caret (macro M-left 5 A-right 5 A-left)
-  vim-a     (macro right 5 (on-press tap-vkey vim-ins))
+  vim-a     (macro M-right 5 (on-press tap-vkey vim-ins))
   vim-o     (macro M-right 5 ret 5 (on-press tap-vkey vim-ins))
 
   vim-yank-normal  M-c
@@ -31,6 +31,10 @@
 
   vim-yank-visual (macro M-c 20 (on-press tap-vkey vim-nrm))
   vim-cut-visual  (macro M-x 20 (on-press tap-vkey vim-nrm))
+  vim-chg-normal  (macro M-x 20 (on-press tap-vkey vim-ins))
+  vim-del-visual  (macro bspc 20 (on-press tap-vkey vim-nrm))
+
+  vim-grep (macro M-f 5 (on-press tap-vkey vim-ins))
 )
 
 ;; Vim-ish normal mode
@@ -62,6 +66,8 @@
   r   @vim-redo
   x   del
 
+  /   @vim-grep
+
   a   @vim-a
   o   @vim-o
 )
@@ -89,7 +95,8 @@
   g   S-M-up
 
   y   @vim-yank-visual
-  d   @vim-cut-visual
+  d   @vim-del-visual
   x   @vim-cut-visual
+  c   @vim-chg-normal
   p   @vim-paste-normal
 )

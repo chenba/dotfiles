@@ -4,6 +4,32 @@ set termguicolors
 set vb
 
 set clipboard+=unnamedplus
+
+" In a Linux devcontainer there's no pbcopy/xclip and the host's pasteboard
+" isn't reachable directly. Override the clipboard provider to OSC52 so yanks
+" travel through the terminal escape stream to the host (kitty/iterm2/wezterm
+" all support write-clipboard at default config). nvim 0.10+ ships an OSC52
+" provider built-in; just point g:clipboard at it.
+"
+" Paste (`"+p` from content copied OUTSIDE nvim) won't work — kitty disables
+" OSC52 reads by default for security. For external paste, use Cmd-V in
+" insert mode (kitty types the chars).
+if filereadable('/.dockerenv') && has('nvim-0.10')
+lua << CLIPBOARD_EOF
+  -- copy: emits an OSC52 escape that kitty (default config) writes to the
+  -- macOS pasteboard. paste: sends an OSC52 read request; kitty by default
+  -- prompts ("ask") for permission per-paste — accept once and the system
+  -- clipboard's contents come back. To skip the prompt, add `read-clipboard`
+  -- to your kitty.conf `clipboard_control`.
+  local osc52 = require('vim.ui.clipboard.osc52')
+  vim.g.clipboard = {
+    name = 'osc52',
+    copy  = { ['+'] = osc52.copy('+'),  ['*'] = osc52.copy('*')  },
+    paste = { ['+'] = osc52.paste('+'), ['*'] = osc52.paste('*') },
+  }
+CLIPBOARD_EOF
+endif
+
 set undofile
 
 set ignorecase
@@ -38,8 +64,11 @@ set softtabstop=2
 filetype plugin indent on
 syntax enable
 
+" Per-project .nvim.lua (asks once per file via :trust)
+set exrc
+
 autocmd VimResized * wincmd =
-autocmd BufLeave,FocusLost * silent! wall
+autocmd BufLeave,FocusLost * ++nested silent! wall
 
 lua << EOF
   vim.api.nvim_create_autocmd('FileType', {
@@ -66,6 +95,7 @@ call plug#begin()
   Plug 'nvim-lua/plenary.nvim'
   Plug 'nvim-telescope/telescope.nvim'
   Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
+  Plug 'dmtrKovalenko/fff.nvim', { 'do': '~/.config/nvim/build-fff.sh' }
   Plug 'nvim-treesitter/nvim-treesitter', { 'branch': 'master', 'do': ':TSUpdate' }
   Plug 'nvim-treesitter/nvim-treesitter-context'
 
@@ -73,6 +103,13 @@ call plug#begin()
   Plug 'williamboman/mason-lspconfig.nvim'
   Plug 'neovim/nvim-lspconfig'
   Plug 'aznhe21/actions-preview.nvim'
+
+  " Debugging (DAP) — node/JS via vscode-js-debug
+  Plug 'mfussenegger/nvim-dap'
+  Plug 'rcarriga/nvim-dap-ui'
+  Plug 'nvim-neotest/nvim-nio'
+  Plug 'theHamsta/nvim-dap-virtual-text'
+  Plug 'jay-babu/mason-nvim-dap.nvim'
 
   Plug 'nvim-lualine/lualine.nvim'
   Plug 'stevearc/dressing.nvim'
@@ -91,9 +128,14 @@ call plug#begin()
   Plug 'morhetz/gruvbox'
 
   if (!exists('g:vscode'))
-    Plug 'knubie/vim-kitty-navigator', {'do': 'cp ./*.py ~/.config/kitty/'}
-    Plug 'mikesmithgh/kitty-scrollback.nvim'
     Plug 'tpope/vim-commentary'
+    " kitty-* plugins shell out to the `kitten` binary and assume a kitty TTY,
+    " neither of which exist in a Linux devcontainer or under tmux/iterm. Skip
+    " when kitten isn't on PATH (also catches non-kitty terminals on the host).
+    if executable('kitten')
+      Plug 'knubie/vim-kitty-navigator', {'do': 'cp ./*.py ~/.config/kitty/'}
+      Plug 'mikesmithgh/kitty-scrollback.nvim'
+    endif
   endif
 
 call plug#end()
@@ -102,6 +144,9 @@ call plug#end()
 "{{{Look and Feel
 
 let g:gruvbox_contrast_dark = 'hard'
+" Unused / cfg-disabled code: italic only, keep the syntax colors (the default
+" links to Comment, which turns e.g. a whole #[cfg(feature)] fn grey)
+autocmd ColorScheme * lua vim.api.nvim_set_hl(0, 'DiagnosticUnnecessary', { italic = true })
 colorscheme gruvbox
 
 "}}}
@@ -118,11 +163,12 @@ nnoremap <silent> *  *zz
 nnoremap <silent> #  #zz
 nnoremap <silent> g* g*zz
 
-nnoremap <leader>ff <cmd>Telescope find_files<cr>
-nnoremap <leader>fg <cmd>Telescope live_grep<cr>
+nnoremap <leader>ff <cmd>lua require('fff').find_files()<cr>
+nnoremap <leader>fg <cmd>lua require('fff').live_grep()<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fr <cmd>Telescope lsp_references<cr>
 nnoremap <leader>fd <cmd>Telescope lsp_definitions<cr>
+nnoremap <leader>fi <cmd>Telescope lsp_implementations<cr>
 nnoremap <leader>fo <cmd>Telescope lsp_document_symbols<cr>
 nnoremap <leader>ft <cmd>Telescope lsp_workspace_symbols<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
@@ -222,23 +268,106 @@ lua << EOF
     callback = format_rust_file,
   })
 
-  vim.api.nvim_create_autocmd({"BufLeave", "FocusLost"}, {
-    pattern = "*.rs",
-    callback = function(ev)
-      local filepath = vim.api.nvim_buf_get_name(ev.buf)
-      if filepath ~= '' and vim.fn.filereadable(filepath) == 1 then
-        -- Wait for auto-save to complete, then format
-        vim.defer_fn(function()
-          -- Double-check the buffer still exists and has the same file
-          if vim.api.nvim_buf_is_valid(ev.buf) then
-            local current_file = vim.api.nvim_buf_get_name(ev.buf)
-            if current_file == filepath then
-              format_rust_file(filepath)  -- Pass the filepath explicitly
-            end
-          end
-        end, 100)
-      end
-    end,
+  -- Prettier on save for JS/TS. Runs only when the project has a prettier
+  -- config (any .prettierrc*, prettier.config.*, or a "prettier" key in
+  -- package.json). Uses the project's node_modules/.bin/prettier first and
+  -- falls back to a prettier on PATH. Formats via stdin on BufWritePre so the
+  -- formatted text is what hits disk; no checktime reload needed.
+  local prettier_config_names = {
+    ['.prettierrc'] = true,
+    ['.prettierrc.json'] = true,
+    ['.prettierrc.yml'] = true,
+    ['.prettierrc.yaml'] = true,
+    ['.prettierrc.json5'] = true,
+    ['.prettierrc.js'] = true,
+    ['.prettierrc.cjs'] = true,
+    ['.prettierrc.mjs'] = true,
+    ['.prettierrc.ts'] = true,
+    ['.prettierrc.toml'] = true,
+    ['prettier.config.js'] = true,
+    ['prettier.config.cjs'] = true,
+    ['prettier.config.mjs'] = true,
+    ['prettier.config.ts'] = true,
+  }
+
+  local function package_json_has_prettier(path)
+    local f = io.open(path, 'r')
+    if not f then return false end
+    local ok, data = pcall(vim.json.decode, f:read('*a'))
+    f:close()
+    return ok and type(data) == 'table' and data.prettier ~= nil
+  end
+
+  -- Directory that holds the nearest prettier config, or nil.
+  local function find_prettier_config_dir(filepath)
+    local found = vim.fs.find(function(name, path)
+      if prettier_config_names[name] then return true end
+      return name == 'package.json' and package_json_has_prettier(path .. '/' .. name)
+    end, {
+      path = vim.fs.dirname(filepath),
+      upward = true,
+      limit = 1,
+      stop = vim.uv.os_homedir(),
+    })
+    return found[1] and vim.fs.dirname(found[1]) or nil
+  end
+
+  local function find_prettier_bin(filepath)
+    local dirs = vim.fs.find('node_modules', {
+      path = vim.fs.dirname(filepath),
+      upward = true,
+      type = 'directory',
+      limit = math.huge,
+      stop = vim.uv.os_homedir(),
+    })
+    for _, dir in ipairs(dirs) do
+      local bin = dir .. '/.bin/prettier'
+      if vim.fn.executable(bin) == 1 then return bin end
+    end
+    if vim.fn.executable('prettier') == 1 then return 'prettier' end
+    return nil
+  end
+
+  local function prettier_format(bufnr)
+    local filepath = vim.api.nvim_buf_get_name(bufnr)
+    if filepath == '' then return end
+
+    local config_dir = find_prettier_config_dir(filepath)
+    if not config_dir then return end
+
+    local bin = find_prettier_bin(filepath)
+    if not bin then
+      vim.notify_once(
+        'prettier config found for ' .. filepath .. ' but no prettier binary (node_modules/.bin or PATH)',
+        vim.log.levels.WARN)
+      return
+    end
+
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    local result = vim.system(
+      { bin, '--no-color', '--stdin-filepath', filepath },
+      { cwd = config_dir, stdin = table.concat(lines, '\n') .. '\n', text = true }
+    ):wait(5000)
+
+    if result.code ~= 0 then
+      local err = (result.stderr or ''):gsub('\27%[[%d;]*m', ''):gsub('%s+$', '')
+      if err == '' then err = 'exit code ' .. tostring(result.code) end
+      vim.notify('prettier: ' .. err, vim.log.levels.WARN)
+      return
+    end
+
+    local out = vim.split(result.stdout or '', '\n', { plain = true })
+    if out[#out] == '' then table.remove(out) end
+    if vim.deep_equal(out, lines) then return end
+
+    local view = (vim.api.nvim_get_current_buf() == bufnr) and vim.fn.winsaveview() or nil
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, out)
+    if view then vim.fn.winrestview(view) end
+  end
+
+  vim.api.nvim_create_autocmd('BufWritePre', {
+    pattern = { '*.js', '*.jsx', '*.mjs', '*.cjs', '*.ts', '*.tsx', '*.mts', '*.cts' },
+    callback = function(ev) prettier_format(ev.buf) end,
   })
 
   vim.keymap.set("n", "<leader>qs", function()
@@ -262,6 +391,32 @@ lua << EOF
     pattern = '*',
     command = 'silent! lua vim.highlight.on_yank({ timeout = 500 })'
   })
+
+  vim.api.nvim_create_user_command('FffUpdate', function()
+    vim.cmd('PlugUpdate fff.nvim')
+    vim.fn.jobstart({ vim.fn.expand('~/.config/nvim/build-fff.sh') }, {
+      cwd = vim.fn.expand('~/.local/share/nvim/plugged/fff.nvim'),
+      on_exit = function(_, code)
+        if code == 0 then
+          vim.notify('fff.nvim rebuilt successfully', vim.log.levels.INFO)
+        else
+          vim.notify('fff.nvim build failed', vim.log.levels.ERROR)
+        end
+      end,
+    })
+  end, {})
+
+  -- Configure fff
+  if pcall(require, 'fff') then
+    require('fff').setup({
+      grep = {
+        modes = { 'fuzzy', 'plain', 'regex' },
+      },
+      layout = {
+        preview_position = 'top',
+      },
+    })
+  end
 
   -- Configure Telescope
   local telescope_actions = require('telescope.actions')
@@ -330,14 +485,21 @@ lua << EOF
     },
   })
 
-  require('telescope').load_extension('fzf')
+  -- Tolerate missing/wrong-arch fzf native: in a fresh container the plugin
+  -- volume hasn't been populated yet, and on first run the library won't be
+  -- built. pcall lets startup continue; telescope just lacks the fzf sorter.
+  pcall(function() require('telescope').load_extension('fzf') end)
 
+  -- kitty-scrollback requires the kitty terminal — skip outside it.
+  if vim.fn.executable('kitten') == 1 then
   require('kitty-scrollback').setup({
     {
       keymaps_enabled = true,
       restore_options = true,
       callbacks = {
         after_ready = function()
+          vim.wo.number = false
+          vim.wo.relativenumber = false
           -- After a yank, the plugin moves cursor to bottom. Restore position.
           vim.api.nvim_create_autocmd('TextYankPost', {
             buffer = 0,
@@ -366,6 +528,7 @@ lua << EOF
       },
     },
   })
+  end  -- if vim.fn.executable('kitten')
 
   local function get_target_window_for_split()
     -- Get all normal windows in the current tab
@@ -429,14 +592,17 @@ lua << EOF
     }))
   end
 
-  vim.keymap.set("n", "<leader>fw", grep_in_split, 
-    { desc = "Grep word under cursor in vsplit" })
-  vim.keymap.set("v", "<leader>fw", 
+  vim.keymap.set("n", "<leader>fw",
+    function()
+      require('fff').live_grep({ query = vim.fn.expand("<cword>") })
+    end,
+    { desc = "Grep word under cursor (fff)" })
+  vim.keymap.set("v", "<leader>fw",
     function()
       local text = table.concat(vim.fn.getreg("v", 1, true), "\n")
-      grep_in_split({ search = text })
-    end, 
-    { desc = "Grep selection in vsplit" })
+      require('fff').live_grep({ query = text })
+    end,
+    { desc = "Grep selection (fff)" })
 
   require('nvim-autopairs').setup({})
 
@@ -543,16 +709,19 @@ lua << EOF
 
   require("mason").setup()
   require("mason-lspconfig").setup({
-    ensure_installed = { "rust_analyzer", "ts_ls", "lua_ls", "pyright", "yamlls" },
+    ensure_installed = { "ts_ls", "lua_ls", "pyright", "yamlls" },
     automatic_installation = false,
   })
-
   vim.lsp.config('ts_ls', {
     on_attach = on_attach,
     flags = lsp_flags,
     capabilities = capabilities,
   })
 
+  -- rust-analyzer comes from rustup (`rustup component add rust-analyzer`), not
+  -- Mason: Mason's build lags the toolchain and its cargo flags break metadata.
+  -- No allFeatures: it enables mutually exclusive features (e.g. tokenserver-auth's
+  -- `py`) and hides `#[cfg(not(feature = ...))]` modules.
   vim.lsp.config('rust_analyzer', {
     on_attach = on_attach,
     flags = vim.tbl_extend('force', lsp_flags, { allow_incremental_sync = false }),
@@ -561,7 +730,7 @@ lua << EOF
     root_markers = { 'Cargo.toml', '.git' },
     settings = {
       ['rust-analyzer'] = {
-        cargo = { allFeatures = true, allTargets = true, cfgs = { test = "" } },
+        cargo = { allTargets = true },
         check = { command = 'clippy' },
         checkOnSave = { enable = true },
         formatting = { enable = true },
@@ -607,7 +776,22 @@ lua << EOF
     },
   })
 
-  for _, name in ipairs({ 'ts_ls', 'rust_analyzer', 'lua_ls', 'pyright', 'yamlls' }) do
+  -- Quint: syntax from syntax/quint.vim, LSP via `npm i -g @informalsystems/quint-language-server`
+  vim.filetype.add({ extension = { qnt = 'quint' } })
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'quint',
+    callback = function() vim.bo.commentstring = '// %s' end,
+  })
+  vim.lsp.config('quint', {
+    cmd = { 'quint-language-server', '--stdio' },
+    filetypes = { 'quint' },
+    root_markers = { '.git', '.jj' },
+    on_attach = on_attach,
+    flags = lsp_flags,
+    capabilities = capabilities,
+  })
+
+  for _, name in ipairs({ 'ts_ls', 'rust_analyzer', 'lua_ls', 'pyright', 'yamlls', 'quint' }) do
     vim.lsp.enable(name)
   end
 
@@ -616,6 +800,8 @@ lua << EOF
   vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
   vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
   vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist, opts)
+  -- Rust buffers: trace the variable under the cursor (lua/flowtrace.lua)
+  require('flowtrace')
   
 
   require("noice").setup({
@@ -648,16 +834,26 @@ lua << EOF
     },
   })
 
+  -- <Esc> closes the LSP hover / signature box (noice closes it on cursor move otherwise)
+  vim.keymap.set('n', '<Esc>', function()
+    local docs = require('noice.lsp.docs')
+    for _, kind in ipairs({ 'hover', 'signature' }) do docs.hide(docs.get(kind)) end
+  end, { desc = 'Close LSP hover' })
+
   require("dressing").setup({})
 
   require("actions-preview").setup({
     backend = { "nui", "telescope" },
   })
 
+  -- Open the GitHub commit that last touched the current line.
+  -- Uses gitsigns' own async + gh modules: `async.create` was removed upstream
+  -- (it is `async.run` now), and gitsigns.gh.commit_url resolves the repo via
+  -- the gh CLI, so it handles enterprise hosts and non-origin remotes.
   local open_commit_in_browser = function()
     local async = require('gitsigns.async')
 
-    async.create(0, function()
+    async.run(function()
       local cache = require('gitsigns.cache').cache
       local bufnr = vim.api.nvim_get_current_buf()
       local bcache = cache[bufnr]
@@ -683,28 +879,86 @@ lua << EOF
       end
 
       local sha = blame.commit.sha
-      if sha == '0000000000000000000000000000000000000000' then
+      if tonumber('0x' .. sha) == 0 then
         print("Line not yet committed")
         return
       end
 
-      local remote_url = vim.fn.system("git config --get remote.origin.url"):gsub("%s+", "")
-      if remote_url == "" then
-        print("No git remote found")
+      local commit_url = require('gitsigns.gh').commit_url(sha, bcache.git_obj.repo.toplevel)
+      if not commit_url then
+        print("Could not resolve a GitHub URL for this repo")
         return
       end
 
-      -- Convert SSH or HTTPS URL to web URL
-      local web_url = remote_url
-        :gsub("^git@github%.com:", "https://github.com/")
-        :gsub("^https://github%.com/", "https://github.com/")
-        :gsub("%.git$", "")
-
-      local commit_url = web_url .. "/commit/" .. sha
-      vim.fn.system("open '" .. commit_url .. "'")
+      async.schedule()
+      vim.ui.open(commit_url)
       print("Opening commit: " .. blame.commit.abbrev_sha)
-    end)()
+    end)
   end
+
+  -- Follow the hyperlink in a gitsigns popup (blame_line attaches the commit
+  -- URL to the SHA, and PR URLs to the "#123" spans, as extmark `url` fields).
+  -- Prefers the URL under the cursor, else the first one in the popup, which is
+  -- the commit itself. Lets `<leader>ghb` -> `<leader>ghb` -> `<CR>` open the
+  -- blamed commit on GitHub.
+  local function open_popup_url()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local ns = vim.api.nvim_get_namespaces()['gitsigns_popup']
+    if not ns then
+      print("No gitsigns popup")
+      return
+    end
+
+    local marks = vim.api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, { details = true })
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local row, col = cursor[1] - 1, cursor[2]
+
+    local under, first
+    for _, mark in ipairs(marks) do
+      local m_row, m_col, details = mark[2], mark[3], mark[4]
+      local url = details and details.url
+      if url then
+        first = first or url
+        if m_row == row and col >= m_col and col < (details.end_col or m_col) then
+          under = url
+          break
+        end
+      end
+    end
+
+    local url = under or first
+    if not url then
+      print("No link in this popup")
+      return
+    end
+
+    vim.ui.open(url)
+    print("Opening: " .. url)
+  end
+
+  -- Bind <CR>/gx inside gitsigns popups. The popup buffer is created fresh each
+  -- time, so hook buffer creation and check for the window-local marker.
+  vim.api.nvim_create_autocmd('BufWinEnter', {
+    callback = function(ev)
+      vim.schedule(function()
+        if not vim.api.nvim_buf_is_valid(ev.buf) then
+          return
+        end
+        for _, winid in ipairs(vim.api.nvim_list_wins()) do
+          if
+            vim.api.nvim_win_get_buf(winid) == ev.buf
+            and vim.w[winid].gitsigns_preview ~= nil
+          then
+            vim.keymap.set('n', '<CR>', open_popup_url,
+              { buffer = ev.buf, silent = true, desc = 'Open popup link' })
+            vim.keymap.set('n', 'gx', open_popup_url,
+              { buffer = ev.buf, silent = true, desc = 'Open popup link' })
+            return
+          end
+        end
+      end)
+    end,
+  })
 
   local open_file_in_browser = function()
     local filepath = vim.fn.expand('%:p')
@@ -943,6 +1197,9 @@ lua << EOF
     { desc = 'Prev hunk (repo-wide)', silent = true })
 
   require("gitsigns").setup({
+    -- Attaches commit + PR hyperlinks to the blame_line popup. Needs the `gh`
+    -- CLI on PATH. See open_popup_url for the keyboard mapping.
+    gh = true,
     signs = {
       add = { text = "▎" },
       change = { text = "▎" },
@@ -1031,6 +1288,12 @@ lua << EOF
     end,
   })
 
+  -- jj (Jujutsu) hunk navigation — see lua/jjsigns.lua. Standalone because
+  -- gitsigns is git-coupled and shows nothing inside a jj *workspace* (the
+  -- workspace dir has no .git). This parses `jj diff --git` directly so it
+  -- works in colocated repos, workspaces, and pure-jj alike.
+  require("jjsigns").setup()
+
   require("nvim-treesitter.configs").setup({
     ensure_installed = { 
       "rust","python","typescript","tsx",
@@ -1048,6 +1311,72 @@ lua << EOF
     },
   })
 
+  -- Jump to the start/end of the enclosing function. The builtin `[m` looks for
+  -- `{` braces, so it does nothing in Python and Lua; this walks the treesitter
+  -- tree instead and works in every language with a parser.
+  local function_node_types = {
+    function_definition = true,   -- python, lua, c, cpp
+    function_declaration = true,  -- go, javascript, typescript, lua
+    function_item = true,         -- rust
+    method_definition = true,     -- javascript, typescript
+    method_declaration = true,    -- go, java
+    method = true,                -- ruby
+    arrow_function = true,        -- javascript, typescript
+    local_function = true,        -- lua
+    ["function"] = true,          -- lua (anonymous)
+  }
+
+  --- Find the innermost function node containing the cursor.
+  --- @return TSNode?
+  local function enclosing_function()
+    -- Make sure the tree exists: the highlighter parses lazily on redraw, so a
+    -- freshly opened buffer can have a parser but no tree yet.
+    local has_parser, parser = pcall(vim.treesitter.get_parser, 0)
+    if not has_parser or not parser then
+      return nil
+    end
+    parser:parse()
+
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local ok, node = pcall(vim.treesitter.get_node, {
+      bufnr = 0,
+      pos = { cursor[1] - 1, cursor[2] },
+    })
+    if not ok or not node then
+      return nil
+    end
+    while node do
+      if function_node_types[node:type()] then
+        return node
+      end
+      node = node:parent()
+    end
+    return nil
+  end
+
+  --- @param which "start"|"end"
+  local function goto_function(which)
+    local node = enclosing_function()
+    if not node then
+      vim.notify("No enclosing function", vim.log.levels.INFO)
+      return
+    end
+    local row, col
+    if which == "start" then
+      row, col = node:start()
+    else
+      row, col = node:end_()
+    end
+    vim.cmd("normal! m'") -- push to jumplist so <C-o> comes back
+    pcall(vim.api.nvim_win_set_cursor, 0, { row + 1, col })
+    vim.cmd("normal! zv") -- open fold if needed
+  end
+
+  vim.keymap.set({ "n", "x" }, "[f", function() goto_function("start") end,
+    { silent = true, desc = "Go to start of function" })
+  vim.keymap.set({ "n", "x" }, "]f", function() goto_function("end") end,
+    { silent = true, desc = "Go to end of function" })
+
   require("treesitter-context").setup({
     enable = true,
     max_lines = 3,
@@ -1058,5 +1387,141 @@ lua << EOF
     dir = vim.fn.expand(vim.fn.stdpath("state") .. "/sessions/"),
     options = { "buffers", "curdir", "tabpages", "winsize" },
   })
+
+  -- {{{ DAP: Node.js debugging via vscode-js-debug
+  -- Guarded so a missing/not-yet-installed plugin doesn't abort startup
+  -- (run :PlugInstall, then restart). Mirrors the pcall(require,'fff') pattern.
+  local dap_ok, dap = pcall(require, "dap")
+  local dapui_ok, dapui = pcall(require, "dapui")
+  if dap_ok and dapui_ok then
+
+  local mnd_ok, mnd = pcall(require, "mason-nvim-dap")
+  if mnd_ok then
+    mnd.setup({
+      ensure_installed = { "js" }, -- installs js-debug-adapter
+      automatic_installation = false,
+      handlers = {}, -- use our own adapter config below, not the defaults
+    })
+  end
+
+  pcall(function() require("nvim-dap-virtual-text").setup() end)
+
+  dapui.setup()
+  require("nvim-dap-virtual-text").setup()
+
+  -- auto open/close the dap-ui panels around a session
+  dap.listeners.before.attach.dapui_config = function() dapui.open() end
+  dap.listeners.before.launch.dapui_config = function() dapui.open() end
+  dap.listeners.before.event_terminated.dapui_config = function() dapui.close() end
+  dap.listeners.before.event_exited.dapui_config = function() dapui.close() end
+
+  -- vscode-js-debug adapter, installed by mason as `js-debug-adapter` (on PATH)
+  for _, t in ipairs({ "pwa-node", "node" }) do
+    dap.adapters[t] = {
+      type = "server",
+      host = "localhost",
+      port = "${port}",
+      executable = {
+        command = "js-debug-adapter",
+        args = { "${port}" },
+      },
+    }
+  end
+
+  -- FXA services run under PM2 via ts-node/register/transpile-only -- there is
+  -- NO dist/ build; TypeScript is transpiled in-memory with inline source maps
+  -- pointing at the .ts source tree. So resolveSourceMapLocations must allow the
+  -- source tree (packages/**, libs/**), NOT just dist/ -- otherwise vscode-js-debug
+  -- silently refuses to bind breakpoints. Each service opens a FIXED inspector
+  -- port (see each packages/<svc>/pm2.config.js NODE_OPTIONS=--inspect=<port>),
+  -- so attaching by port is more reliable than picking a process.
+  local fxa_sourcemaps = {
+    "${workspaceFolder}/packages/**",
+    "${workspaceFolder}/libs/**",
+    "!**/node_modules/**",
+  }
+
+  -- Direct port attach per service (port from that service's pm2.config.js)
+  local function attach_port(name, port)
+    return {
+      type = "pwa-node",
+      request = "attach",
+      name = name,
+      address = "localhost",
+      port = port,
+      cwd = "${workspaceFolder}",
+      sourceMaps = true,
+      resolveSourceMapLocations = fxa_sourcemaps,
+      -- ts-node transpile-only: skip stepping into node internals/deps
+      skipFiles = { "<node_internals>/**", "**/node_modules/**" },
+    }
+  end
+
+  local js_configs = {
+    attach_port("Attach: auth-server (9160)", 9160),
+    attach_port("Attach: admin-panel (9140)", 9140),
+    attach_port("Attach: content-server (9130)", 9130),
+    {
+      type = "pwa-node",
+      request = "attach",
+      name = "Attach to PM2 (pick process)",
+      processId = require("dap.utils").pick_process,
+      cwd = "${workspaceFolder}",
+      sourceMaps = true,
+      resolveSourceMapLocations = fxa_sourcemaps,
+      skipFiles = { "<node_internals>/**", "**/node_modules/**" },
+    },
+    {
+      type = "pwa-node",
+      request = "launch",
+      name = "Functional Tests (Playwright)",
+      program = "${workspaceFolder}/node_modules/@playwright/test/cli.js",
+      args = {
+        "test",
+        "--config=${workspaceFolder}/packages/functional-tests/playwright.config.ts",
+        "--project=local",
+      },
+      cwd = "${workspaceFolder}/packages/functional-tests",
+      env = {
+        DEBUG = "1",
+        NODE_OPTIONS = "--dns-result-order=ipv4first",
+      },
+      autoAttachChildProcesses = true,
+      sourceMaps = true,
+      resolveSourceMapLocations = fxa_sourcemaps,
+      skipFiles = { "<node_internals>/**", "**/node_modules/**" },
+    },
+    {
+      type = "pwa-node",
+      request = "launch",
+      name = "Launch current file",
+      program = "${file}",
+      cwd = "${workspaceFolder}",
+      sourceMaps = true,
+    },
+  }
+  dap.configurations.javascript = js_configs
+  dap.configurations.typescript = js_configs
+
+  -- Keymaps (<leader>d namespace + F-keys for stepping)
+  local dk = function(lhs, rhs, desc)
+    vim.keymap.set("n", lhs, rhs, { silent = true, desc = desc })
+  end
+  dk("<F5>",  dap.continue,          "DAP continue/start")
+  dk("<F10>", dap.step_over,         "DAP step over")
+  dk("<F11>", dap.step_into,         "DAP step into")
+  dk("<F12>", dap.step_out,          "DAP step out")
+  dk("<leader>db", dap.toggle_breakpoint, "DAP toggle breakpoint")
+  dk("<leader>dB", function()
+    dap.set_breakpoint(vim.fn.input("Breakpoint condition: "))
+  end, "DAP conditional breakpoint")
+  dk("<leader>dc", dap.continue,     "DAP continue/start")
+  dk("<leader>dr", dap.repl.toggle,  "DAP toggle REPL")
+  dk("<leader>dl", dap.run_last,     "DAP run last")
+  dk("<leader>dt", dap.terminate,    "DAP terminate")
+  dk("<leader>du", dapui.toggle,     "DAP toggle UI")
+
+  end -- if dap_ok and dapui_ok
+  -- }}}
 EOF
 endif
